@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "description": "Profile of a single dataset column.\n\nAttributes:\n    name: Column name.\n    inferred_type: Inferred column type — ``\"numeric\"`` or ``\"categorical\"``.\n    missing_frac: Fraction of rows with a missing value in [0, 1].\n    n_unique: Number of distinct non-null values.\n    unique_ratio: ``n_unique / n_rows``.\n    dropped: Whether the column was dropped before modelling.\n    reason: Human-readable reason why the column was dropped (if applicable).",
+  "properties": {
+    "dropped": {
+      "default": false,
+      "title": "Dropped",
+      "type": "boolean"
+    },
+    "inferred_type": {
+      "title": "Inferred Type",
+      "type": "string"
+    },
+    "missing_frac": {
+      "title": "Missing Frac",
+      "type": "number"
+    },
+    "n_unique": {
+      "title": "N Unique",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "unique_ratio": {
+      "title": "Unique Ratio",
+      "type": "number"
+    }
+  },
+  "required": [
+    "name",
+    "inferred_type",
+    "missing_frac",
+    "n_unique",
+    "unique_ratio"
+  ],
+  "title": "ColumnProfile",
+  "type": "object"
+}

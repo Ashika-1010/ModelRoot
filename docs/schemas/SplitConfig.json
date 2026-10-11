@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "SplitMode": {
+      "description": "How the train/test split is supplied by the user.",
+      "enum": [
+        "single_file",
+        "split_column",
+        "test_file"
+      ],
+      "title": "SplitMode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "How the dataset is divided into training and test sets.\n\nAttributes:\n    mode: Split strategy.\n    test_size: Fraction of rows reserved for the holdout set when\n        ``mode`` is ``single_file``.  Must be in (0, 1).\n    split_column: Column name whose values are ``\"train\"`` / ``\"test\"``\n        (required when ``mode`` is ``split_column``).\n    test_path: Path to a separate test-set file\n        (required when ``mode`` is ``test_file``).",
+  "properties": {
+    "mode": {
+      "$ref": "#/$defs/SplitMode"
+    },
+    "split_column": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Split Column"
+    },
+    "test_path": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Test Path"
+    },
+    "test_size": {
+      "default": 0.2,
+      "title": "Test Size",
+      "type": "number"
+    }
+  },
+  "required": [
+    "mode"
+  ],
+  "title": "SplitConfig",
+  "type": "object"
+}

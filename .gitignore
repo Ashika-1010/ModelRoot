@@ -76,3 +76,5 @@ desktop.ini
 *.key
 secrets.yaml
 secrets.yml
+
+.hypothesis/

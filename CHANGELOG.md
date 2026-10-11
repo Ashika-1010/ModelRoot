@@ -7,7 +7,26 @@ Versions correspond to milestones; semantic versioning begins at v1.0 (M36).
 
 ---
 
-## [Unreleased — M0] — 2026-10-10
+## [Unreleased — M1 audit fixes] — 2026-10-10
+
+### Changed
+
+- `AnalysisResult.experiments` field type corrected from `list[ExperimentSpec]` to
+  `list[ExperimentResult]`.  The master plan §3.3 specifies that the pipeline runner
+  returns `ExperimentResult` objects; `AnalysisResult` is the complete output artifact
+  and must carry the full experiment outcomes, not just the input specifications.
+- `AblationConfig` removed from the public export registry (`export_json_schemas`)
+  and from `modelroot.schemas.__all__`.  It remains accessible as
+  `modelroot.schemas.config.AblationConfig` and is reachable via `$defs` in the
+  exported `AnalysisConfig` JSON Schema.  It was never a standalone top-level
+  contract in the master plan; it was an inline sub-object of `AnalysisConfig`.
+- `docs/schemas/examples/analysis_result.json` updated so `experiments[]` contains
+  an `ExperimentResult` object consistent with the corrected field type.
+- JSON Schema snapshots regenerated: `AnalysisResult.json` updated to reflect
+  `ExperimentResult` elements; `AblationConfig.json` snapshot removed.
+
+
+
 
 ### Added
 

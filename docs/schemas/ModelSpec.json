@@ -1,0 +1,50 @@
+{
+  "$defs": {
+    "Algorithm": {
+      "description": "Supported training algorithms.\n\nValues are the stable string identifiers used in ``ModelSpec.algorithm``\nand in every artifact that references a trained model.",
+      "enum": [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+        "hist_gradient_boosting"
+      ],
+      "title": "Algorithm",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Specification of the algorithm and hyper-parameters ModelRoot will train.\n\nAttributes:\n    algorithm: Which algorithm to use.\n    params: Algorithm hyper-parameters.  Values must be JSON scalars\n        (int, float, str, bool, or null).  Complex types are rejected.",
+  "properties": {
+    "algorithm": {
+      "$ref": "#/$defs/Algorithm"
+    },
+    "params": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Params",
+      "type": "object"
+    }
+  },
+  "required": [
+    "algorithm"
+  ],
+  "title": "ModelSpec",
+  "type": "object"
+}

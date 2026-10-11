@@ -1,0 +1,85 @@
+{
+  "additionalProperties": false,
+  "description": "Specification describing one experiment to run.\n\nAttributes:\n    id: Unique, non-empty experiment identifier.\n    hypothesis_id: ID of the hypothesis that generated this experiment.\n    name: Human-readable name.\n    intervention: Registered intervention name (e.g. ``\"regularize\"``).\n    params: Intervention parameters.  Values must be JSON scalars.\n    metric: Name of the metric to use for comparison.\n    eval_on: Which evaluation sets to score\n        (``\"holdout\"``, ``\"current\"``, or both).\n    n_boot: Number of bootstrap resamples.\n    repeats: Number of repeated-subsample repeats.\n    seed: Random seed for this experiment.  Must be ≥ 0.\n    budget_s: Per-experiment wall-clock budget in seconds.  Must be > 0.\n\nRaises:\n    ValueError: If ``id`` or ``hypothesis_id`` are empty, ``seed < 0``,\n        ``budget_s <= 0``, or any param value is a non-scalar.",
+  "properties": {
+    "budget_s": {
+      "title": "Budget S",
+      "type": "number"
+    },
+    "eval_on": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Eval On",
+      "type": "array"
+    },
+    "hypothesis_id": {
+      "title": "Hypothesis Id",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "intervention": {
+      "title": "Intervention",
+      "type": "string"
+    },
+    "metric": {
+      "title": "Metric",
+      "type": "string"
+    },
+    "n_boot": {
+      "default": 1000,
+      "title": "N Boot",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "params": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Params",
+      "type": "object"
+    },
+    "repeats": {
+      "default": 10,
+      "title": "Repeats",
+      "type": "integer"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "hypothesis_id",
+    "name",
+    "intervention",
+    "metric",
+    "seed",
+    "budget_s"
+  ],
+  "title": "ExperimentSpec",
+  "type": "object"
+}

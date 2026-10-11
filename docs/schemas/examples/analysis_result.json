@@ -1,0 +1,211 @@
+{
+  "schema_version": "1.0",
+  "analysis_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "created_at": "2026-10-10T12:00:00Z",
+  "status": "completed",
+  "config": {
+    "data_path": "data/example.csv",
+    "target": "label",
+    "positive_class": "1",
+    "split": {
+      "mode": "single_file",
+      "test_size": 0.2,
+      "split_column": null,
+      "test_path": null
+    },
+    "current_path": null,
+    "model_spec": {
+      "algorithm": "logistic_regression",
+      "params": {
+        "C": 1.0,
+        "max_iter": 200
+      }
+    },
+    "primary_metric": "macro_f1",
+    "metadata": {
+      "expected_score": 0.75,
+      "unavailable_at_inference": [],
+      "id_columns": ["row_id"],
+      "sensitive_columns": ["gender"]
+    },
+    "seed": 42,
+    "budget_s": 300.0,
+    "run_experiments": true,
+    "rules_profile": "full",
+    "ablation": {
+      "subgroup_protocol": "full"
+    },
+    "explain": true
+  },
+  "dataset_fingerprint": "sha256:deadbeefcafe0000111122223333444455556666777788889999aaaabbbbcccc",
+  "split_fingerprint": "sha256:0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
+  "versions": {
+    "modelroot": "0.0.1",
+    "python": "3.11.0",
+    "scikit-learn": "1.4.0"
+  },
+  "rule_set_version": "1.0",
+  "thresholds": {
+    "delta_min": 0.02,
+    "alpha": 0.05
+  },
+  "assessment": {
+    "baseline_metrics": [
+      {
+        "name": "macro_f1",
+        "value": 0.72,
+        "split": "holdout",
+        "n": 400,
+        "ci_low": 0.68,
+        "ci_high": 0.76
+      },
+      {
+        "name": "macro_f1",
+        "value": 0.91,
+        "split": "train",
+        "n": 1600,
+        "ci_low": null,
+        "ci_high": null
+      }
+    ],
+    "dummy_metrics": [
+      {
+        "name": "macro_f1",
+        "value": 0.45,
+        "split": "holdout",
+        "n": 400,
+        "ci_low": null,
+        "ci_high": null
+      }
+    ],
+    "reference": {
+      "algorithm": "random_forest",
+      "metrics": [
+        {
+          "name": "macro_f1",
+          "value": 0.81,
+          "split": "holdout",
+          "n": 400,
+          "ci_low": null,
+          "ci_high": null
+        }
+      ]
+    },
+    "headroom": 0.09,
+    "train_holdout_gap": 0.19,
+    "current_drop": null,
+    "underperforming": true,
+    "reasons": [
+      "Reference model outperforms baseline by 0.09 (headroom threshold: 0.03)",
+      "Train-holdout gap is 0.19 (threshold: 0.10)"
+    ],
+    "headline": "Baseline macro_f1=0.72 vs reference 0.81; train-holdout gap 0.19 — model is underperforming"
+  },
+  "hypotheses": [
+    {
+      "id": "h1-overfitting-001",
+      "type": "overfitting",
+      "subtype": null,
+      "status": "supported",
+      "evidence_strength": 0.85,
+      "severity": "high",
+      "priority_rank": 1,
+      "trigger": {
+        "fired": true,
+        "rule_id": "OF-T1",
+        "values": {
+          "train_score": 0.91,
+          "holdout_score": 0.72,
+          "gap": 0.19,
+          "gap_rel": 0.2087912087912088
+        }
+      },
+      "diagnostic_evidence_ids": ["ev_a1b2c3d4", "ev_e5f6a7b8"],
+      "experiment_ids": ["exp-of-regularize-001"],
+      "effect": {
+        "metric": "macro_f1",
+        "baseline": 0.72,
+        "intervention": 0.78,
+        "delta": 0.06,
+        "ci_low": 0.01,
+        "ci_high": 0.11,
+        "n": 400
+      },
+      "decision": {
+        "rule_id": "OF-D1",
+        "rule_text": "supported if delta>=delta_min and ci_low>0 and gap_shrinkage>=0.30 and consistency>=0.80",
+        "rules_profile": "full",
+        "criteria_met": {
+          "delta_gte_delta_min": true,
+          "ci_low_positive": true,
+          "gap_shrinkage_gte_0.30": true,
+          "consistency_gte_0.80": true
+        }
+      },
+      "confounders_checked": ["label_noise", "train_holdout_mismatch"],
+      "caveats": [
+        "Regularisation grid is small; a larger grid might identify a better-regularised variant."
+      ],
+      "recommended_actions": [
+        "Apply the selected regularised configuration in production.",
+        "Consider collecting more training data."
+      ],
+      "explanation": null
+    }
+  ],
+  "experiments": [
+    {
+      "spec_id": "exp-of-regularize-001",
+      "status": "completed",
+      "baseline_metric": 0.72,
+      "intervention_metric": 0.78,
+      "delta": 0.06,
+      "ci_low": 0.01,
+      "ci_high": 0.11,
+      "n_eval": 400,
+      "n_valid_boot": 1000,
+      "repeat_deltas": [0.05, 0.07, 0.06, 0.08, 0.04, 0.07, 0.06, 0.05, 0.08, 0.06],
+      "consistency": 1.0,
+      "nb": null,
+      "runtime_s": 5.21,
+      "notes": [],
+      "error": null
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_a1b2c3d4",
+      "kind": "diagnostic",
+      "name": "train_holdout_gap",
+      "value": 0.19,
+      "ci_low": null,
+      "ci_high": null,
+      "n": null,
+      "method": "metric_difference",
+      "hint": "Train-holdout performance gap on the primary metric.",
+      "experiment_id": null
+    },
+    {
+      "id": "ev_e5f6a7b8",
+      "kind": "experiment",
+      "name": "regularization_delta",
+      "value": 0.06,
+      "ci_low": 0.01,
+      "ci_high": 0.11,
+      "n": 400,
+      "method": "paired_bootstrap",
+      "hint": "Improvement from regularised model over baseline on holdout.",
+      "experiment_id": "exp-of-regularize-001"
+    }
+  ],
+  "warnings": [],
+  "timings": {
+    "validate": 0.12,
+    "split": 0.03,
+    "baseline": 4.21,
+    "assessment": 6.80,
+    "hypotheses": 45.33,
+    "total": 56.49
+  },
+  "reproducibility_hash": "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+}

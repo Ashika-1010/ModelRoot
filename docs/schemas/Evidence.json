@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "EvidenceKind": {
+      "description": "Whether an evidence item comes from a passive diagnostic or a paired experiment.",
+      "enum": [
+        "diagnostic",
+        "experiment"
+      ],
+      "title": "EvidenceKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A single, atomic measured fact produced during an analysis.\n\nEvidence items are the only things explanations may cite.  Each item\ncarries a stable ``id`` computed from its content (not from position).\n\nAttributes:\n    id: Stable identifier: ``\"ev_\"`` followed by 8 hex characters derived\n        from a hash of ``(name, value, method, experiment_id)``.\n    kind: Whether this is a passive diagnostic measurement or the result\n        of a paired experiment.\n    name: Human-readable name for the measured quantity.\n    value: Numeric value of the measurement.\n    ci_low: Lower bound of the bootstrap confidence interval.\n    ci_high: Upper bound of the bootstrap confidence interval.\n    n: Number of samples underlying the measurement.\n    method: Name of the statistical method or computation used.\n    hint: Short, template-friendly description of what this evidence means.\n    experiment_id: ``ExperimentSpec.id`` if this evidence originated from\n        an experiment; ``None`` for diagnostic evidence.\n\nRaises:\n    ValueError: If ``id`` is empty, or ``ci_low > ci_high`` when both are\n        supplied.",
+  "properties": {
+    "ci_high": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ci High"
+    },
+    "ci_low": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ci Low"
+    },
+    "experiment_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Experiment Id"
+    },
+    "hint": {
+      "title": "Hint",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/EvidenceKind"
+    },
+    "method": {
+      "title": "Method",
+      "type": "string"
+    },
+    "n": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "N"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "value": {
+      "title": "Value",
+      "type": "number"
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "name",
+    "value",
+    "method",
+    "hint"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

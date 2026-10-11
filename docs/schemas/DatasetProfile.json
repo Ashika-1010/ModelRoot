@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "ColumnProfile": {
+      "additionalProperties": false,
+      "description": "Profile of a single dataset column.\n\nAttributes:\n    name: Column name.\n    inferred_type: Inferred column type — ``\"numeric\"`` or ``\"categorical\"``.\n    missing_frac: Fraction of rows with a missing value in [0, 1].\n    n_unique: Number of distinct non-null values.\n    unique_ratio: ``n_unique / n_rows``.\n    dropped: Whether the column was dropped before modelling.\n    reason: Human-readable reason why the column was dropped (if applicable).",
+      "properties": {
+        "dropped": {
+          "default": false,
+          "title": "Dropped",
+          "type": "boolean"
+        },
+        "inferred_type": {
+          "title": "Inferred Type",
+          "type": "string"
+        },
+        "missing_frac": {
+          "title": "Missing Frac",
+          "type": "number"
+        },
+        "n_unique": {
+          "title": "N Unique",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "unique_ratio": {
+          "title": "Unique Ratio",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "inferred_type",
+        "missing_frac",
+        "n_unique",
+        "unique_ratio"
+      ],
+      "title": "ColumnProfile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Summary statistics for the dataset after loading and validation.\n\nAttributes:\n    n_rows: Number of rows in the dataset.\n    n_cols: Number of columns (including the target).\n    class_balance: Mapping from class label to row count.\n    columns: Per-column profiles.\n    warnings: Free-text warnings raised during profiling.",
+  "properties": {
+    "class_balance": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Class Balance",
+      "type": "object"
+    },
+    "columns": {
+      "items": {
+        "$ref": "#/$defs/ColumnProfile"
+      },
+      "title": "Columns",
+      "type": "array"
+    },
+    "n_cols": {
+      "title": "N Cols",
+      "type": "integer"
+    },
+    "n_rows": {
+      "title": "N Rows",
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "n_rows",
+    "n_cols",
+    "class_balance"
+  ],
+  "title": "DatasetProfile",
+  "type": "object"
+}

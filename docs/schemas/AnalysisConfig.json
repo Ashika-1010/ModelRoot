@@ -1,0 +1,258 @@
+{
+  "$defs": {
+    "AblationConfig": {
+      "additionalProperties": false,
+      "description": "Flags controlling ablation modes used by the benchmark.\n\nAttributes:\n    subgroup_protocol: Whether to apply the full two-stage FDR subgroup\n        protocol (``full``) or the naive single-pass ranking ablation\n        (``naive``).",
+      "properties": {
+        "subgroup_protocol": {
+          "$ref": "#/$defs/RulesProfile",
+          "default": "full"
+        }
+      },
+      "title": "AblationConfig",
+      "type": "object"
+    },
+    "Algorithm": {
+      "description": "Supported training algorithms.\n\nValues are the stable string identifiers used in ``ModelSpec.algorithm``\nand in every artifact that references a trained model.",
+      "enum": [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+        "hist_gradient_boosting"
+      ],
+      "title": "Algorithm",
+      "type": "string"
+    },
+    "Metadata": {
+      "additionalProperties": false,
+      "description": "Optional contextual hints about the dataset and task.\n\nAttributes:\n    expected_score: The user's prior expectation of model performance on\n        the primary metric.  Used by the assessor to identify\n        underperformance.\n    unavailable_at_inference: Column names that exist in training data\n        but are *not* available at inference time (potential leakage).\n    id_columns: Columns that are row identifiers (excluded from features).\n    sensitive_columns: Columns corresponding to protected attributes\n        (used by the subgroup hypothesis).",
+      "properties": {
+        "expected_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Score"
+        },
+        "id_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Id Columns",
+          "type": "array"
+        },
+        "sensitive_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sensitive Columns",
+          "type": "array"
+        },
+        "unavailable_at_inference": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unavailable At Inference",
+          "type": "array"
+        }
+      },
+      "title": "Metadata",
+      "type": "object"
+    },
+    "ModelSpec": {
+      "additionalProperties": false,
+      "description": "Specification of the algorithm and hyper-parameters ModelRoot will train.\n\nAttributes:\n    algorithm: Which algorithm to use.\n    params: Algorithm hyper-parameters.  Values must be JSON scalars\n        (int, float, str, bool, or null).  Complex types are rejected.",
+      "properties": {
+        "algorithm": {
+          "$ref": "#/$defs/Algorithm"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "algorithm"
+      ],
+      "title": "ModelSpec",
+      "type": "object"
+    },
+    "PrimaryMetric": {
+      "description": "Optimisation / evaluation metric used as the primary performance signal.",
+      "enum": [
+        "accuracy",
+        "balanced_accuracy",
+        "macro_f1",
+        "f1",
+        "roc_auc"
+      ],
+      "title": "PrimaryMetric",
+      "type": "string"
+    },
+    "RulesProfile": {
+      "description": "Decision-rule strictness profile.\n\n``full`` applies the complete multi-criteria protocol.\n``naive`` is an ablation that uses only point-estimate Δ ≥ δ_min.",
+      "enum": [
+        "full",
+        "naive"
+      ],
+      "title": "RulesProfile",
+      "type": "string"
+    },
+    "SplitConfig": {
+      "additionalProperties": false,
+      "description": "How the dataset is divided into training and test sets.\n\nAttributes:\n    mode: Split strategy.\n    test_size: Fraction of rows reserved for the holdout set when\n        ``mode`` is ``single_file``.  Must be in (0, 1).\n    split_column: Column name whose values are ``\"train\"`` / ``\"test\"``\n        (required when ``mode`` is ``split_column``).\n    test_path: Path to a separate test-set file\n        (required when ``mode`` is ``test_file``).",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/SplitMode"
+        },
+        "split_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split Column"
+        },
+        "test_path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Test Path"
+        },
+        "test_size": {
+          "default": 0.2,
+          "title": "Test Size",
+          "type": "number"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "SplitConfig",
+      "type": "object"
+    },
+    "SplitMode": {
+      "description": "How the train/test split is supplied by the user.",
+      "enum": [
+        "single_file",
+        "split_column",
+        "test_file"
+      ],
+      "title": "SplitMode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Top-level configuration for a single ModelRoot analysis run.\n\nThis is the primary user-facing input object.  It must be fully\nspecified before an analysis can start.\n\nAttributes:\n    data_path: Path to the primary CSV dataset.\n    target: Name of the target column.\n    positive_class: Value in ``target`` that represents the positive class.\n    split: How the dataset is split into train / holdout sets.\n    current_path: Optional path to a third \"current\" dataset collected\n        after deployment (used by H5 — distribution shift).\n    model_spec: Algorithm and hyper-parameters to train.\n    primary_metric: Performance metric used as the primary signal.\n    metadata: Optional contextual hints.\n    seed: Master random seed.  Must be ≥ 0.\n    budget_s: Wall-clock budget in seconds for the experiment phase.\n        Must be > 0.\n    run_experiments: When ``False`` the engine only runs triggers\n        (detector-only ablation mode, never shown to end users).\n    rules_profile: Decision-rule strictness profile.\n    ablation: Fine-grained ablation flags.\n    explain: Whether to generate natural-language explanations.",
+  "properties": {
+    "ablation": {
+      "$ref": "#/$defs/AblationConfig"
+    },
+    "budget_s": {
+      "default": 300.0,
+      "title": "Budget S",
+      "type": "number"
+    },
+    "current_path": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Current Path"
+    },
+    "data_path": {
+      "format": "path",
+      "title": "Data Path",
+      "type": "string"
+    },
+    "explain": {
+      "default": true,
+      "title": "Explain",
+      "type": "boolean"
+    },
+    "metadata": {
+      "$ref": "#/$defs/Metadata"
+    },
+    "model_spec": {
+      "$ref": "#/$defs/ModelSpec"
+    },
+    "positive_class": {
+      "title": "Positive Class",
+      "type": "string"
+    },
+    "primary_metric": {
+      "$ref": "#/$defs/PrimaryMetric",
+      "default": "macro_f1"
+    },
+    "rules_profile": {
+      "$ref": "#/$defs/RulesProfile",
+      "default": "full"
+    },
+    "run_experiments": {
+      "default": true,
+      "title": "Run Experiments",
+      "type": "boolean"
+    },
+    "seed": {
+      "default": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "split": {
+      "$ref": "#/$defs/SplitConfig"
+    },
+    "target": {
+      "title": "Target",
+      "type": "string"
+    }
+  },
+  "required": [
+    "data_path",
+    "target",
+    "positive_class",
+    "model_spec"
+  ],
+  "title": "AnalysisConfig",
+  "type": "object"
+}

@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "description": "Natural-language explanation generated for a hypothesis result.\n\nAttributes:\n    source: How the explanation was produced — ``\"template\"`` for the\n        deterministic template path, ``\"llm\"`` for the validated LLM path.\n    text: The explanation text.\n    provenance: Optional provenance string (e.g. model/prompt version)\n        when ``source`` is ``\"llm\"``.",
+  "properties": {
+    "provenance": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provenance"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "text"
+  ],
+  "title": "ExplanationOutput",
+  "type": "object"
+}

@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "description": "Summary of the primary measured effect for a hypothesis.\n\nAttributes:\n    metric: Name of the metric.\n    baseline: Baseline model metric value.\n    intervention: Intervention model metric value.\n    delta: ``intervention - baseline``.\n    ci_low: Lower bound of the paired bootstrap CI on delta.\n    ci_high: Upper bound of the paired bootstrap CI on delta.\n    n: Evaluation-set size.\n\nRaises:\n    ValueError: If ``ci_low > ci_high``.",
+  "properties": {
+    "baseline": {
+      "title": "Baseline",
+      "type": "number"
+    },
+    "ci_high": {
+      "title": "Ci High",
+      "type": "number"
+    },
+    "ci_low": {
+      "title": "Ci Low",
+      "type": "number"
+    },
+    "delta": {
+      "title": "Delta",
+      "type": "number"
+    },
+    "intervention": {
+      "title": "Intervention",
+      "type": "number"
+    },
+    "metric": {
+      "title": "Metric",
+      "type": "string"
+    },
+    "n": {
+      "title": "N",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "metric",
+    "baseline",
+    "intervention",
+    "delta",
+    "ci_low",
+    "ci_high",
+    "n"
+  ],
+  "title": "EffectResult",
+  "type": "object"
+}

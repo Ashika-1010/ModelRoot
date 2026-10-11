@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "description": "Output of the Nadeau-Bengio corrected resampled t-test.\n\nAttributes:\n    mean: Mean delta across repeated subsamples.\n    se: Corrected standard error.\n    t: t-statistic.\n    df: Degrees of freedom (J - 1 where J = number of repeats).\n    p: Two-sided p-value.\n    ci_low: Lower bound of the corrected confidence interval.\n    ci_high: Upper bound of the corrected confidence interval.\n\nRaises:\n    ValueError: If ``ci_low > ci_high``.",
+  "properties": {
+    "ci_high": {
+      "title": "Ci High",
+      "type": "number"
+    },
+    "ci_low": {
+      "title": "Ci Low",
+      "type": "number"
+    },
+    "df": {
+      "title": "Df",
+      "type": "number"
+    },
+    "mean": {
+      "title": "Mean",
+      "type": "number"
+    },
+    "p": {
+      "title": "P",
+      "type": "number"
+    },
+    "se": {
+      "title": "Se",
+      "type": "number"
+    },
+    "t": {
+      "title": "T",
+      "type": "number"
+    }
+  },
+  "required": [
+    "mean",
+    "se",
+    "t",
+    "df",
+    "p",
+    "ci_low",
+    "ci_high"
+  ],
+  "title": "NBResult",
+  "type": "object"
+}

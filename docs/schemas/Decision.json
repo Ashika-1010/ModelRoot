@@ -1,0 +1,42 @@
+{
+  "$defs": {
+    "RulesProfile": {
+      "description": "Decision-rule strictness profile.\n\n``full`` applies the complete multi-criteria protocol.\n``naive`` is an ablation that uses only point-estimate Δ ≥ δ_min.",
+      "enum": [
+        "full",
+        "naive"
+      ],
+      "title": "RulesProfile",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Record of which decision rule was applied and which criteria were met.\n\nAttributes:\n    rule_id: Identifier of the versioned decision rule.\n    rule_text: Human-readable description of the rule.\n    rules_profile: Which rules profile was active when the decision was made.\n    criteria_met: Map from criterion identifier to whether it was satisfied.",
+  "properties": {
+    "criteria_met": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "title": "Criteria Met",
+      "type": "object"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "rule_text": {
+      "title": "Rule Text",
+      "type": "string"
+    },
+    "rules_profile": {
+      "$ref": "#/$defs/RulesProfile"
+    }
+  },
+  "required": [
+    "rule_id",
+    "rule_text",
+    "rules_profile"
+  ],
+  "title": "Decision",
+  "type": "object"
+}

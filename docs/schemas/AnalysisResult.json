@@ -1,0 +1,1086 @@
+{
+  "$defs": {
+    "AblationConfig": {
+      "additionalProperties": false,
+      "description": "Flags controlling ablation modes used by the benchmark.\n\nAttributes:\n    subgroup_protocol: Whether to apply the full two-stage FDR subgroup\n        protocol (``full``) or the naive single-pass ranking ablation\n        (``naive``).",
+      "properties": {
+        "subgroup_protocol": {
+          "$ref": "#/$defs/RulesProfile",
+          "default": "full"
+        }
+      },
+      "title": "AblationConfig",
+      "type": "object"
+    },
+    "Algorithm": {
+      "description": "Supported training algorithms.\n\nValues are the stable string identifiers used in ``ModelSpec.algorithm``\nand in every artifact that references a trained model.",
+      "enum": [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+        "hist_gradient_boosting"
+      ],
+      "title": "Algorithm",
+      "type": "string"
+    },
+    "AnalysisConfig": {
+      "additionalProperties": false,
+      "description": "Top-level configuration for a single ModelRoot analysis run.\n\nThis is the primary user-facing input object.  It must be fully\nspecified before an analysis can start.\n\nAttributes:\n    data_path: Path to the primary CSV dataset.\n    target: Name of the target column.\n    positive_class: Value in ``target`` that represents the positive class.\n    split: How the dataset is split into train / holdout sets.\n    current_path: Optional path to a third \"current\" dataset collected\n        after deployment (used by H5 — distribution shift).\n    model_spec: Algorithm and hyper-parameters to train.\n    primary_metric: Performance metric used as the primary signal.\n    metadata: Optional contextual hints.\n    seed: Master random seed.  Must be ≥ 0.\n    budget_s: Wall-clock budget in seconds for the experiment phase.\n        Must be > 0.\n    run_experiments: When ``False`` the engine only runs triggers\n        (detector-only ablation mode, never shown to end users).\n    rules_profile: Decision-rule strictness profile.\n    ablation: Fine-grained ablation flags.\n    explain: Whether to generate natural-language explanations.",
+      "properties": {
+        "ablation": {
+          "$ref": "#/$defs/AblationConfig"
+        },
+        "budget_s": {
+          "default": 300.0,
+          "title": "Budget S",
+          "type": "number"
+        },
+        "current_path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current Path"
+        },
+        "data_path": {
+          "format": "path",
+          "title": "Data Path",
+          "type": "string"
+        },
+        "explain": {
+          "default": true,
+          "title": "Explain",
+          "type": "boolean"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "model_spec": {
+          "$ref": "#/$defs/ModelSpec"
+        },
+        "positive_class": {
+          "title": "Positive Class",
+          "type": "string"
+        },
+        "primary_metric": {
+          "$ref": "#/$defs/PrimaryMetric",
+          "default": "macro_f1"
+        },
+        "rules_profile": {
+          "$ref": "#/$defs/RulesProfile",
+          "default": "full"
+        },
+        "run_experiments": {
+          "default": true,
+          "title": "Run Experiments",
+          "type": "boolean"
+        },
+        "seed": {
+          "default": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "split": {
+          "$ref": "#/$defs/SplitConfig"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "data_path",
+        "target",
+        "positive_class",
+        "model_spec"
+      ],
+      "title": "AnalysisConfig",
+      "type": "object"
+    },
+    "AssessmentResult": {
+      "additionalProperties": false,
+      "description": "Verdict on whether the user's model is underperforming.\n\nAttributes:\n    baseline_metrics: Metrics for the user's model on train / holdout.\n    dummy_metrics: Metrics for the majority-class dummy baseline.\n    reference: Best reference-panel model result.\n    headroom: Gap between reference and baseline on the primary metric.\n    train_holdout_gap: ``train_score - holdout_score`` on the primary metric.\n    current_drop: ``holdout_score - current_score`` if a labeled current\n        dataset was supplied, otherwise ``None``.\n    underperforming: Whether the engine concluded the model underperforms.\n    reasons: List of human-readable reasons for the verdict.\n    headline: One-line summary string shown to the user.",
+      "properties": {
+        "baseline_metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricResult"
+          },
+          "title": "Baseline Metrics",
+          "type": "array"
+        },
+        "current_drop": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current Drop"
+        },
+        "dummy_metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricResult"
+          },
+          "title": "Dummy Metrics",
+          "type": "array"
+        },
+        "headline": {
+          "title": "Headline",
+          "type": "string"
+        },
+        "headroom": {
+          "title": "Headroom",
+          "type": "number"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "reference": {
+          "$ref": "#/$defs/ReferenceResult"
+        },
+        "train_holdout_gap": {
+          "title": "Train Holdout Gap",
+          "type": "number"
+        },
+        "underperforming": {
+          "title": "Underperforming",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "reference",
+        "headroom",
+        "train_holdout_gap",
+        "underperforming",
+        "headline"
+      ],
+      "title": "AssessmentResult",
+      "type": "object"
+    },
+    "Decision": {
+      "additionalProperties": false,
+      "description": "Record of which decision rule was applied and which criteria were met.\n\nAttributes:\n    rule_id: Identifier of the versioned decision rule.\n    rule_text: Human-readable description of the rule.\n    rules_profile: Which rules profile was active when the decision was made.\n    criteria_met: Map from criterion identifier to whether it was satisfied.",
+      "properties": {
+        "criteria_met": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Criteria Met",
+          "type": "object"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_text": {
+          "title": "Rule Text",
+          "type": "string"
+        },
+        "rules_profile": {
+          "$ref": "#/$defs/RulesProfile"
+        }
+      },
+      "required": [
+        "rule_id",
+        "rule_text",
+        "rules_profile"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "EffectResult": {
+      "additionalProperties": false,
+      "description": "Summary of the primary measured effect for a hypothesis.\n\nAttributes:\n    metric: Name of the metric.\n    baseline: Baseline model metric value.\n    intervention: Intervention model metric value.\n    delta: ``intervention - baseline``.\n    ci_low: Lower bound of the paired bootstrap CI on delta.\n    ci_high: Upper bound of the paired bootstrap CI on delta.\n    n: Evaluation-set size.\n\nRaises:\n    ValueError: If ``ci_low > ci_high``.",
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "number"
+        },
+        "ci_high": {
+          "title": "Ci High",
+          "type": "number"
+        },
+        "ci_low": {
+          "title": "Ci Low",
+          "type": "number"
+        },
+        "delta": {
+          "title": "Delta",
+          "type": "number"
+        },
+        "intervention": {
+          "title": "Intervention",
+          "type": "number"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "metric",
+        "baseline",
+        "intervention",
+        "delta",
+        "ci_low",
+        "ci_high",
+        "n"
+      ],
+      "title": "EffectResult",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "A single, atomic measured fact produced during an analysis.\n\nEvidence items are the only things explanations may cite.  Each item\ncarries a stable ``id`` computed from its content (not from position).\n\nAttributes:\n    id: Stable identifier: ``\"ev_\"`` followed by 8 hex characters derived\n        from a hash of ``(name, value, method, experiment_id)``.\n    kind: Whether this is a passive diagnostic measurement or the result\n        of a paired experiment.\n    name: Human-readable name for the measured quantity.\n    value: Numeric value of the measurement.\n    ci_low: Lower bound of the bootstrap confidence interval.\n    ci_high: Upper bound of the bootstrap confidence interval.\n    n: Number of samples underlying the measurement.\n    method: Name of the statistical method or computation used.\n    hint: Short, template-friendly description of what this evidence means.\n    experiment_id: ``ExperimentSpec.id`` if this evidence originated from\n        an experiment; ``None`` for diagnostic evidence.\n\nRaises:\n    ValueError: If ``id`` is empty, or ``ci_low > ci_high`` when both are\n        supplied.",
+      "properties": {
+        "ci_high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci High"
+        },
+        "ci_low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Low"
+        },
+        "experiment_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Experiment Id"
+        },
+        "hint": {
+          "title": "Hint",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/EvidenceKind"
+        },
+        "method": {
+          "title": "Method",
+          "type": "string"
+        },
+        "n": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "N"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "value",
+        "method",
+        "hint"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "EvidenceKind": {
+      "description": "Whether an evidence item comes from a passive diagnostic or a paired experiment.",
+      "enum": [
+        "diagnostic",
+        "experiment"
+      ],
+      "title": "EvidenceKind",
+      "type": "string"
+    },
+    "ExperimentResult": {
+      "additionalProperties": false,
+      "description": "Result of a completed (or attempted) experiment.\n\nAttributes:\n    spec_id: References ``ExperimentSpec.id``.\n    status: Terminal state of the experiment run.\n    baseline_metric: Baseline model metric value on the evaluation set.\n    intervention_metric: Intervention model metric value.\n    delta: ``intervention_metric - baseline_metric``.\n    ci_low: Lower bound of the paired bootstrap CI on delta.\n    ci_high: Upper bound of the paired bootstrap CI on delta.\n    n_eval: Number of evaluation-set samples.\n    n_valid_boot: Number of valid bootstrap resamples (may be < n_boot\n        if some resamples contained only one class).\n    repeat_deltas: Delta values from repeated-subsample runs.\n    consistency: Fraction of repeats with delta > 0.\n    nb: Nadeau-Bengio corrected test output, if repeats were run.\n    runtime_s: Wall-clock time in seconds.\n    notes: Free-text notes recorded during the run.\n    error: Error message if ``status`` is ``error``.\n\nRaises:\n    ValueError: If ``ci_low > ci_high``.",
+      "properties": {
+        "baseline_metric": {
+          "title": "Baseline Metric",
+          "type": "number"
+        },
+        "ci_high": {
+          "title": "Ci High",
+          "type": "number"
+        },
+        "ci_low": {
+          "title": "Ci Low",
+          "type": "number"
+        },
+        "consistency": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Consistency"
+        },
+        "delta": {
+          "title": "Delta",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "intervention_metric": {
+          "title": "Intervention Metric",
+          "type": "number"
+        },
+        "n_eval": {
+          "title": "N Eval",
+          "type": "integer"
+        },
+        "n_valid_boot": {
+          "title": "N Valid Boot",
+          "type": "integer"
+        },
+        "nb": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NBResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "repeat_deltas": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Repeat Deltas",
+          "type": "array"
+        },
+        "runtime_s": {
+          "title": "Runtime S",
+          "type": "number"
+        },
+        "spec_id": {
+          "title": "Spec Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ExperimentStatus"
+        }
+      },
+      "required": [
+        "spec_id",
+        "status",
+        "baseline_metric",
+        "intervention_metric",
+        "delta",
+        "ci_low",
+        "ci_high",
+        "n_eval",
+        "n_valid_boot",
+        "runtime_s"
+      ],
+      "title": "ExperimentResult",
+      "type": "object"
+    },
+    "ExperimentStatus": {
+      "description": "Terminal state of an individual experiment run.",
+      "enum": [
+        "completed",
+        "timeout",
+        "error"
+      ],
+      "title": "ExperimentStatus",
+      "type": "string"
+    },
+    "ExplanationOutput": {
+      "additionalProperties": false,
+      "description": "Natural-language explanation generated for a hypothesis result.\n\nAttributes:\n    source: How the explanation was produced — ``\"template\"`` for the\n        deterministic template path, ``\"llm\"`` for the validated LLM path.\n    text: The explanation text.\n    provenance: Optional provenance string (e.g. model/prompt version)\n        when ``source`` is ``\"llm\"``.",
+      "properties": {
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provenance"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "text"
+      ],
+      "title": "ExplanationOutput",
+      "type": "object"
+    },
+    "HypothesisResult": {
+      "additionalProperties": false,
+      "description": "Complete verdict for one hypothesis (or sub-hypothesis).\n\nAttributes:\n    id: Non-empty unique identifier for this result.\n    type: Which of the five hypothesis types this result belongs to.\n    subtype: Sub-claim within the hypothesis type, or ``None``.\n        Allowed values depend on ``type`` — see the master plan §3.2.\n    status: Verdict assigned by the rule engine.\n    evidence_strength: Weighted fraction of satisfied decision criteria\n        in [0, 1].  For ranking only; not a calibrated probability.\n    severity: Estimated impact magnitude (only set when ``status`` is\n        ``supported`` or ``weakly_supported``).\n    priority_rank: Position in the overall ranking of hypotheses.\n    trigger: Outcome of the trigger check.\n    diagnostic_evidence_ids: IDs of ``Evidence`` items from diagnostics.\n    experiment_ids: IDs of ``ExperimentSpec`` items that were run.\n    effect: Summary of the primary measured effect, if available.\n    decision: The rule and criteria that produced ``status``.\n    confounders_checked: List of confounder names that were assessed.\n    caveats: Free-text caveats about this verdict.\n    recommended_actions: Suggested next steps for the user.\n    explanation: Natural-language explanation, if ``explain=True``.\n\nRaises:\n    ValueError: If ``id`` is empty, ``evidence_strength`` is outside\n        [0, 1], or ``subtype`` is invalid for ``type``.",
+      "properties": {
+        "caveats": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Caveats",
+          "type": "array"
+        },
+        "confounders_checked": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Confounders Checked",
+          "type": "array"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "diagnostic_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Diagnostic Evidence Ids",
+          "type": "array"
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EffectResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidence_strength": {
+          "title": "Evidence Strength",
+          "type": "number"
+        },
+        "experiment_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Experiment Ids",
+          "type": "array"
+        },
+        "explanation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExplanationOutput"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "priority_rank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Priority Rank"
+        },
+        "recommended_actions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Recommended Actions",
+          "type": "array"
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Severity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "subtype": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtype"
+        },
+        "trigger": {
+          "$ref": "#/$defs/TriggerResult"
+        },
+        "type": {
+          "$ref": "#/$defs/HypothesisType"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "status",
+        "evidence_strength",
+        "trigger",
+        "decision"
+      ],
+      "title": "HypothesisResult",
+      "type": "object"
+    },
+    "HypothesisType": {
+      "description": "The five supported failure hypotheses.",
+      "enum": [
+        "overfitting",
+        "imbalance",
+        "leakage",
+        "subgroup",
+        "shift"
+      ],
+      "title": "HypothesisType",
+      "type": "string"
+    },
+    "Metadata": {
+      "additionalProperties": false,
+      "description": "Optional contextual hints about the dataset and task.\n\nAttributes:\n    expected_score: The user's prior expectation of model performance on\n        the primary metric.  Used by the assessor to identify\n        underperformance.\n    unavailable_at_inference: Column names that exist in training data\n        but are *not* available at inference time (potential leakage).\n    id_columns: Columns that are row identifiers (excluded from features).\n    sensitive_columns: Columns corresponding to protected attributes\n        (used by the subgroup hypothesis).",
+      "properties": {
+        "expected_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Score"
+        },
+        "id_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Id Columns",
+          "type": "array"
+        },
+        "sensitive_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sensitive Columns",
+          "type": "array"
+        },
+        "unavailable_at_inference": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unavailable At Inference",
+          "type": "array"
+        }
+      },
+      "title": "Metadata",
+      "type": "object"
+    },
+    "MetricResult": {
+      "additionalProperties": false,
+      "description": "A scalar metric measurement on a single data split.\n\nAttributes:\n    name: Metric identifier (e.g. ``\"macro_f1\"``).\n    value: Measured value, typically in [0, 1] for classification metrics.\n    split: Data split the metric was computed on.\n    n: Number of samples used for this measurement.\n    ci_low: Lower bound of the bootstrap confidence interval.\n    ci_high: Upper bound of the bootstrap confidence interval.\n\nRaises:\n    ValueError: If ``ci_low > ci_high`` when both bounds are supplied.",
+      "properties": {
+        "ci_high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci High"
+        },
+        "ci_low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Low"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "train",
+            "holdout",
+            "current",
+            "oof"
+          ],
+          "title": "Split",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "split",
+        "n"
+      ],
+      "title": "MetricResult",
+      "type": "object"
+    },
+    "ModelSpec": {
+      "additionalProperties": false,
+      "description": "Specification of the algorithm and hyper-parameters ModelRoot will train.\n\nAttributes:\n    algorithm: Which algorithm to use.\n    params: Algorithm hyper-parameters.  Values must be JSON scalars\n        (int, float, str, bool, or null).  Complex types are rejected.",
+      "properties": {
+        "algorithm": {
+          "$ref": "#/$defs/Algorithm"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "algorithm"
+      ],
+      "title": "ModelSpec",
+      "type": "object"
+    },
+    "NBResult": {
+      "additionalProperties": false,
+      "description": "Output of the Nadeau-Bengio corrected resampled t-test.\n\nAttributes:\n    mean: Mean delta across repeated subsamples.\n    se: Corrected standard error.\n    t: t-statistic.\n    df: Degrees of freedom (J - 1 where J = number of repeats).\n    p: Two-sided p-value.\n    ci_low: Lower bound of the corrected confidence interval.\n    ci_high: Upper bound of the corrected confidence interval.\n\nRaises:\n    ValueError: If ``ci_low > ci_high``.",
+      "properties": {
+        "ci_high": {
+          "title": "Ci High",
+          "type": "number"
+        },
+        "ci_low": {
+          "title": "Ci Low",
+          "type": "number"
+        },
+        "df": {
+          "title": "Df",
+          "type": "number"
+        },
+        "mean": {
+          "title": "Mean",
+          "type": "number"
+        },
+        "p": {
+          "title": "P",
+          "type": "number"
+        },
+        "se": {
+          "title": "Se",
+          "type": "number"
+        },
+        "t": {
+          "title": "T",
+          "type": "number"
+        }
+      },
+      "required": [
+        "mean",
+        "se",
+        "t",
+        "df",
+        "p",
+        "ci_low",
+        "ci_high"
+      ],
+      "title": "NBResult",
+      "type": "object"
+    },
+    "PrimaryMetric": {
+      "description": "Optimisation / evaluation metric used as the primary performance signal.",
+      "enum": [
+        "accuracy",
+        "balanced_accuracy",
+        "macro_f1",
+        "f1",
+        "roc_auc"
+      ],
+      "title": "PrimaryMetric",
+      "type": "string"
+    },
+    "ReferenceResult": {
+      "additionalProperties": false,
+      "description": "Performance of the reference panel model on the holdout set.\n\nAttributes:\n    algorithm: Which algorithm was used for the reference model.\n    metrics: Metrics achieved by the reference model.",
+      "properties": {
+        "algorithm": {
+          "$ref": "#/$defs/Algorithm"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricResult"
+          },
+          "title": "Metrics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "algorithm"
+      ],
+      "title": "ReferenceResult",
+      "type": "object"
+    },
+    "RulesProfile": {
+      "description": "Decision-rule strictness profile.\n\n``full`` applies the complete multi-criteria protocol.\n``naive`` is an ablation that uses only point-estimate Δ ≥ δ_min.",
+      "enum": [
+        "full",
+        "naive"
+      ],
+      "title": "RulesProfile",
+      "type": "string"
+    },
+    "Severity": {
+      "description": "Estimated impact magnitude of a supported or weakly-supported hypothesis.",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SplitConfig": {
+      "additionalProperties": false,
+      "description": "How the dataset is divided into training and test sets.\n\nAttributes:\n    mode: Split strategy.\n    test_size: Fraction of rows reserved for the holdout set when\n        ``mode`` is ``single_file``.  Must be in (0, 1).\n    split_column: Column name whose values are ``\"train\"`` / ``\"test\"``\n        (required when ``mode`` is ``split_column``).\n    test_path: Path to a separate test-set file\n        (required when ``mode`` is ``test_file``).",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/SplitMode"
+        },
+        "split_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split Column"
+        },
+        "test_path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Test Path"
+        },
+        "test_size": {
+          "default": 0.2,
+          "title": "Test Size",
+          "type": "number"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "SplitConfig",
+      "type": "object"
+    },
+    "SplitMode": {
+      "description": "How the train/test split is supplied by the user.",
+      "enum": [
+        "single_file",
+        "split_column",
+        "test_file"
+      ],
+      "title": "SplitMode",
+      "type": "string"
+    },
+    "Status": {
+      "description": "Verdict assigned to a hypothesis after evaluating its evidence.",
+      "enum": [
+        "supported",
+        "weakly_supported",
+        "inconclusive",
+        "rejected",
+        "not_triggered",
+        "not_applicable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "TriggerResult": {
+      "additionalProperties": false,
+      "description": "Outcome of the cheap diagnostic trigger check for a hypothesis.\n\nAttributes:\n    fired: Whether the trigger fired (i.e. experiments should be run).\n    rule_id: Identifier of the trigger rule that was evaluated.\n    values: Measured diagnostic quantities used by the trigger decision.",
+      "properties": {
+        "fired": {
+          "title": "Fired",
+          "type": "boolean"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "fired",
+        "rule_id"
+      ],
+      "title": "TriggerResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete output of one ModelRoot analysis run.\n\nThis is the single top-level artifact.  It carries ``schema_version``\nfor forward-compatibility and a ``reproducibility_hash`` that is stable\nacross identical runs.\n\nAttributes:\n    schema_version: Schema version string, always ``\"1.0\"`` for this\n        release.  Additive optional fields bump the minor version;\n        removals / renames bump the major version.\n    analysis_id: Globally unique run identifier (UUID).\n    created_at: ISO-8601 timestamp of when the run started.\n    status: Terminal state — ``\"completed\"``, ``\"partial\"``, or\n        ``\"failed\"``.\n    config: The ``AnalysisConfig`` that produced this result.\n    dataset_fingerprint: Hash of the dataset used for reproducibility.\n    split_fingerprint: Hash of the train/holdout split.\n    versions: Library version strings (e.g. ``{\"modelroot\": \"0.0.1\"}``).\n    rule_set_version: Version of the decision rule set applied.\n    thresholds: Snapshot of the ``Thresholds`` object used.  Stored as a\n        generic JSON object in M1; the ``Thresholds`` Pydantic model is\n        introduced in M6.\n    assessment: Assessment verdict.\n    hypotheses: One result per triggered hypothesis (or sub-hypothesis).\n    experiments: All experiment results produced during the analysis run.\n    evidence: All evidence items cited by hypothesis results.\n    warnings: Engine-level warnings (e.g. budget exceeded, partial run).\n    timings: Wall-clock timings per pipeline stage.\n    reproducibility_hash: Hash of config + dataset + split + thresholds +\n        rule_set_version + library versions.  Same hash ⇒ identical\n        verdicts (excluding timings).\n\nRaises:\n    ValueError: If ``schema_version`` is empty or ``analysis_id`` is empty.",
+  "properties": {
+    "analysis_id": {
+      "title": "Analysis Id",
+      "type": "string"
+    },
+    "assessment": {
+      "$ref": "#/$defs/AssessmentResult"
+    },
+    "config": {
+      "$ref": "#/$defs/AnalysisConfig"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "dataset_fingerprint": {
+      "title": "Dataset Fingerprint",
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "experiments": {
+      "items": {
+        "$ref": "#/$defs/ExperimentResult"
+      },
+      "title": "Experiments",
+      "type": "array"
+    },
+    "hypotheses": {
+      "items": {
+        "$ref": "#/$defs/HypothesisResult"
+      },
+      "title": "Hypotheses",
+      "type": "array"
+    },
+    "reproducibility_hash": {
+      "title": "Reproducibility Hash",
+      "type": "string"
+    },
+    "rule_set_version": {
+      "title": "Rule Set Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "split_fingerprint": {
+      "title": "Split Fingerprint",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "thresholds": {
+      "additionalProperties": true,
+      "title": "Thresholds",
+      "type": "object"
+    },
+    "timings": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Timings",
+      "type": "object"
+    },
+    "versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Versions",
+      "type": "object"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "analysis_id",
+    "created_at",
+    "status",
+    "config",
+    "dataset_fingerprint",
+    "split_fingerprint",
+    "rule_set_version",
+    "assessment",
+    "reproducibility_hash"
+  ],
+  "title": "AnalysisResult",
+  "type": "object",
+  "x-schema-version": "1.0"
+}

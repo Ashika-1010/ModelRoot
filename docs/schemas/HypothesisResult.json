@@ -1,0 +1,325 @@
+{
+  "$defs": {
+    "Decision": {
+      "additionalProperties": false,
+      "description": "Record of which decision rule was applied and which criteria were met.\n\nAttributes:\n    rule_id: Identifier of the versioned decision rule.\n    rule_text: Human-readable description of the rule.\n    rules_profile: Which rules profile was active when the decision was made.\n    criteria_met: Map from criterion identifier to whether it was satisfied.",
+      "properties": {
+        "criteria_met": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Criteria Met",
+          "type": "object"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_text": {
+          "title": "Rule Text",
+          "type": "string"
+        },
+        "rules_profile": {
+          "$ref": "#/$defs/RulesProfile"
+        }
+      },
+      "required": [
+        "rule_id",
+        "rule_text",
+        "rules_profile"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "EffectResult": {
+      "additionalProperties": false,
+      "description": "Summary of the primary measured effect for a hypothesis.\n\nAttributes:\n    metric: Name of the metric.\n    baseline: Baseline model metric value.\n    intervention: Intervention model metric value.\n    delta: ``intervention - baseline``.\n    ci_low: Lower bound of the paired bootstrap CI on delta.\n    ci_high: Upper bound of the paired bootstrap CI on delta.\n    n: Evaluation-set size.\n\nRaises:\n    ValueError: If ``ci_low > ci_high``.",
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "number"
+        },
+        "ci_high": {
+          "title": "Ci High",
+          "type": "number"
+        },
+        "ci_low": {
+          "title": "Ci Low",
+          "type": "number"
+        },
+        "delta": {
+          "title": "Delta",
+          "type": "number"
+        },
+        "intervention": {
+          "title": "Intervention",
+          "type": "number"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "metric",
+        "baseline",
+        "intervention",
+        "delta",
+        "ci_low",
+        "ci_high",
+        "n"
+      ],
+      "title": "EffectResult",
+      "type": "object"
+    },
+    "ExplanationOutput": {
+      "additionalProperties": false,
+      "description": "Natural-language explanation generated for a hypothesis result.\n\nAttributes:\n    source: How the explanation was produced — ``\"template\"`` for the\n        deterministic template path, ``\"llm\"`` for the validated LLM path.\n    text: The explanation text.\n    provenance: Optional provenance string (e.g. model/prompt version)\n        when ``source`` is ``\"llm\"``.",
+      "properties": {
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provenance"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "text"
+      ],
+      "title": "ExplanationOutput",
+      "type": "object"
+    },
+    "HypothesisType": {
+      "description": "The five supported failure hypotheses.",
+      "enum": [
+        "overfitting",
+        "imbalance",
+        "leakage",
+        "subgroup",
+        "shift"
+      ],
+      "title": "HypothesisType",
+      "type": "string"
+    },
+    "RulesProfile": {
+      "description": "Decision-rule strictness profile.\n\n``full`` applies the complete multi-criteria protocol.\n``naive`` is an ablation that uses only point-estimate Δ ≥ δ_min.",
+      "enum": [
+        "full",
+        "naive"
+      ],
+      "title": "RulesProfile",
+      "type": "string"
+    },
+    "Severity": {
+      "description": "Estimated impact magnitude of a supported or weakly-supported hypothesis.",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "Status": {
+      "description": "Verdict assigned to a hypothesis after evaluating its evidence.",
+      "enum": [
+        "supported",
+        "weakly_supported",
+        "inconclusive",
+        "rejected",
+        "not_triggered",
+        "not_applicable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "TriggerResult": {
+      "additionalProperties": false,
+      "description": "Outcome of the cheap diagnostic trigger check for a hypothesis.\n\nAttributes:\n    fired: Whether the trigger fired (i.e. experiments should be run).\n    rule_id: Identifier of the trigger rule that was evaluated.\n    values: Measured diagnostic quantities used by the trigger decision.",
+      "properties": {
+        "fired": {
+          "title": "Fired",
+          "type": "boolean"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "fired",
+        "rule_id"
+      ],
+      "title": "TriggerResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete verdict for one hypothesis (or sub-hypothesis).\n\nAttributes:\n    id: Non-empty unique identifier for this result.\n    type: Which of the five hypothesis types this result belongs to.\n    subtype: Sub-claim within the hypothesis type, or ``None``.\n        Allowed values depend on ``type`` — see the master plan §3.2.\n    status: Verdict assigned by the rule engine.\n    evidence_strength: Weighted fraction of satisfied decision criteria\n        in [0, 1].  For ranking only; not a calibrated probability.\n    severity: Estimated impact magnitude (only set when ``status`` is\n        ``supported`` or ``weakly_supported``).\n    priority_rank: Position in the overall ranking of hypotheses.\n    trigger: Outcome of the trigger check.\n    diagnostic_evidence_ids: IDs of ``Evidence`` items from diagnostics.\n    experiment_ids: IDs of ``ExperimentSpec`` items that were run.\n    effect: Summary of the primary measured effect, if available.\n    decision: The rule and criteria that produced ``status``.\n    confounders_checked: List of confounder names that were assessed.\n    caveats: Free-text caveats about this verdict.\n    recommended_actions: Suggested next steps for the user.\n    explanation: Natural-language explanation, if ``explain=True``.\n\nRaises:\n    ValueError: If ``id`` is empty, ``evidence_strength`` is outside\n        [0, 1], or ``subtype`` is invalid for ``type``.",
+  "properties": {
+    "caveats": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Caveats",
+      "type": "array"
+    },
+    "confounders_checked": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Confounders Checked",
+      "type": "array"
+    },
+    "decision": {
+      "$ref": "#/$defs/Decision"
+    },
+    "diagnostic_evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Diagnostic Evidence Ids",
+      "type": "array"
+    },
+    "effect": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EffectResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "evidence_strength": {
+      "title": "Evidence Strength",
+      "type": "number"
+    },
+    "experiment_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Experiment Ids",
+      "type": "array"
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExplanationOutput"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "priority_rank": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Priority Rank"
+    },
+    "recommended_actions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Recommended Actions",
+      "type": "array"
+    },
+    "severity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Severity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "status": {
+      "$ref": "#/$defs/Status"
+    },
+    "subtype": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subtype"
+    },
+    "trigger": {
+      "$ref": "#/$defs/TriggerResult"
+    },
+    "type": {
+      "$ref": "#/$defs/HypothesisType"
+    }
+  },
+  "required": [
+    "id",
+    "type",
+    "status",
+    "evidence_strength",
+    "trigger",
+    "decision"
+  ],
+  "title": "HypothesisResult",
+  "type": "object"
+}

@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "description": "Outcome of the cheap diagnostic trigger check for a hypothesis.\n\nAttributes:\n    fired: Whether the trigger fired (i.e. experiments should be run).\n    rule_id: Identifier of the trigger rule that was evaluated.\n    values: Measured diagnostic quantities used by the trigger decision.",
+  "properties": {
+    "fired": {
+      "title": "Fired",
+      "type": "boolean"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "values": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Values",
+      "type": "object"
+    }
+  },
+  "required": [
+    "fired",
+    "rule_id"
+  ],
+  "title": "TriggerResult",
+  "type": "object"
+}

@@ -1,0 +1,161 @@
+{
+  "$defs": {
+    "Algorithm": {
+      "description": "Supported training algorithms.\n\nValues are the stable string identifiers used in ``ModelSpec.algorithm``\nand in every artifact that references a trained model.",
+      "enum": [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+        "hist_gradient_boosting"
+      ],
+      "title": "Algorithm",
+      "type": "string"
+    },
+    "MetricResult": {
+      "additionalProperties": false,
+      "description": "A scalar metric measurement on a single data split.\n\nAttributes:\n    name: Metric identifier (e.g. ``\"macro_f1\"``).\n    value: Measured value, typically in [0, 1] for classification metrics.\n    split: Data split the metric was computed on.\n    n: Number of samples used for this measurement.\n    ci_low: Lower bound of the bootstrap confidence interval.\n    ci_high: Upper bound of the bootstrap confidence interval.\n\nRaises:\n    ValueError: If ``ci_low > ci_high`` when both bounds are supplied.",
+      "properties": {
+        "ci_high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci High"
+        },
+        "ci_low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Low"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "train",
+            "holdout",
+            "current",
+            "oof"
+          ],
+          "title": "Split",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "split",
+        "n"
+      ],
+      "title": "MetricResult",
+      "type": "object"
+    },
+    "ReferenceResult": {
+      "additionalProperties": false,
+      "description": "Performance of the reference panel model on the holdout set.\n\nAttributes:\n    algorithm: Which algorithm was used for the reference model.\n    metrics: Metrics achieved by the reference model.",
+      "properties": {
+        "algorithm": {
+          "$ref": "#/$defs/Algorithm"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricResult"
+          },
+          "title": "Metrics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "algorithm"
+      ],
+      "title": "ReferenceResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Verdict on whether the user's model is underperforming.\n\nAttributes:\n    baseline_metrics: Metrics for the user's model on train / holdout.\n    dummy_metrics: Metrics for the majority-class dummy baseline.\n    reference: Best reference-panel model result.\n    headroom: Gap between reference and baseline on the primary metric.\n    train_holdout_gap: ``train_score - holdout_score`` on the primary metric.\n    current_drop: ``holdout_score - current_score`` if a labeled current\n        dataset was supplied, otherwise ``None``.\n    underperforming: Whether the engine concluded the model underperforms.\n    reasons: List of human-readable reasons for the verdict.\n    headline: One-line summary string shown to the user.",
+  "properties": {
+    "baseline_metrics": {
+      "items": {
+        "$ref": "#/$defs/MetricResult"
+      },
+      "title": "Baseline Metrics",
+      "type": "array"
+    },
+    "current_drop": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Current Drop"
+    },
+    "dummy_metrics": {
+      "items": {
+        "$ref": "#/$defs/MetricResult"
+      },
+      "title": "Dummy Metrics",
+      "type": "array"
+    },
+    "headline": {
+      "title": "Headline",
+      "type": "string"
+    },
+    "headroom": {
+      "title": "Headroom",
+      "type": "number"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "reference": {
+      "$ref": "#/$defs/ReferenceResult"
+    },
+    "train_holdout_gap": {
+      "title": "Train Holdout Gap",
+      "type": "number"
+    },
+    "underperforming": {
+      "title": "Underperforming",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "reference",
+    "headroom",
+    "train_holdout_gap",
+    "underperforming",
+    "headline"
+  ],
+  "title": "AssessmentResult",
+  "type": "object"
+}

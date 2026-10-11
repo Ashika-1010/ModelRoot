@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "description": "A scalar metric measurement on a single data split.\n\nAttributes:\n    name: Metric identifier (e.g. ``\"macro_f1\"``).\n    value: Measured value, typically in [0, 1] for classification metrics.\n    split: Data split the metric was computed on.\n    n: Number of samples used for this measurement.\n    ci_low: Lower bound of the bootstrap confidence interval.\n    ci_high: Upper bound of the bootstrap confidence interval.\n\nRaises:\n    ValueError: If ``ci_low > ci_high`` when both bounds are supplied.",
+  "properties": {
+    "ci_high": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ci High"
+    },
+    "ci_low": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ci Low"
+    },
+    "n": {
+      "title": "N",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "split": {
+      "enum": [
+        "train",
+        "holdout",
+        "current",
+        "oof"
+      ],
+      "title": "Split",
+      "type": "string"
+    },
+    "value": {
+      "title": "Value",
+      "type": "number"
+    }
+  },
+  "required": [
+    "name",
+    "value",
+    "split",
+    "n"
+  ],
+  "title": "MetricResult",
+  "type": "object"
+}

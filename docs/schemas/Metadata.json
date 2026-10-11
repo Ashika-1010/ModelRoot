@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "description": "Optional contextual hints about the dataset and task.\n\nAttributes:\n    expected_score: The user's prior expectation of model performance on\n        the primary metric.  Used by the assessor to identify\n        underperformance.\n    unavailable_at_inference: Column names that exist in training data\n        but are *not* available at inference time (potential leakage).\n    id_columns: Columns that are row identifiers (excluded from features).\n    sensitive_columns: Columns corresponding to protected attributes\n        (used by the subgroup hypothesis).",
+  "properties": {
+    "expected_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected Score"
+    },
+    "id_columns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Id Columns",
+      "type": "array"
+    },
+    "sensitive_columns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Sensitive Columns",
+      "type": "array"
+    },
+    "unavailable_at_inference": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unavailable At Inference",
+      "type": "array"
+    }
+  },
+  "title": "Metadata",
+  "type": "object"
+}
