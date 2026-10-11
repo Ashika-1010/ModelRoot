@@ -1,0 +1,57 @@
+# ModelRoot — pre-commit hook configuration
+#
+# Install pre-commit (already in dev deps via pip install -e "core[dev]"):
+#   pip install pre-commit
+#   pre-commit install
+#
+# Run all hooks manually:
+#   pre-commit run --all-files
+#
+# No dependencies beyond the milestone's allowed development tools are added.
+# pre-commit itself is a prerequisite for the hook mechanism; it is listed
+# as a dev dependency only if explicitly needed (here it is implied by usage).
+# Ruff and mypy are already in core[dev]; the hooks below invoke them via
+# their pre-commit mirror repos so they run in isolated hook environments
+# pinned to the same versions as the project.
+
+repos:
+  # ---------------------------------------------------------------------------
+  # General file hygiene (no extra deps — uses pre-commit's own hooks)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: debug-statements
+
+  # ---------------------------------------------------------------------------
+  # Ruff — fast Python linter + formatter (mirrors allowed dev dep)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.7
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: ^core/
+      - id: ruff-format
+        files: ^core/
+
+  # ---------------------------------------------------------------------------
+  # Mypy — strict type checking on core/src (mirrors allowed dev dep)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        files: ^core/src/
+        args: ["--config-file", "core/pyproject.toml"]
+        # mypy needs the package installed to resolve imports; pass
+        # additional_dependencies only if imports from installed packages
+        # are needed.  For M0 (no runtime deps) none are required.
+        additional_dependencies: []

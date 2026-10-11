@@ -1,0 +1,78 @@
+# ModelRoot .gitignore
+
+# ---------------------------------------------------------------------------
+# Data — never commit raw or processed datasets
+# ---------------------------------------------------------------------------
+data/
+*.pkl
+*.pickle
+
+# Benchmark results: ignore all JSONL outputs …
+benchmark/results/*.jsonl
+# … except explicitly frozen results (named with a "frozen_" prefix, e.g.
+# benchmark/results/frozen_v1_heldout.jsonl).  To commit a frozen file, use:
+#   git add -f benchmark/results/frozen_*.jsonl
+!benchmark/results/frozen_*.jsonl
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ---------------------------------------------------------------------------
+# Virtual environments
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# ---------------------------------------------------------------------------
+# Node / frontend (M30+)
+# ---------------------------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ---------------------------------------------------------------------------
+# OS artefacts
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# Editor / IDE
+# ---------------------------------------------------------------------------
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------------
+# Secrets / credentials — never commit these
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.pem
+*.key
+secrets.yaml
+secrets.yml

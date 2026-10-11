@@ -1,0 +1,52 @@
+# ModelRoot — GitHub Actions CI
+#
+# What this workflow does:
+#   1. Triggers on every push and pull-request (all branches).
+#   2. Checks out the repository.
+#   3. Sets up Python 3.11 with pip dependency caching keyed on
+#      core/pyproject.toml so the cache is invalidated when deps change.
+#   4. Installs the package and all development dependencies from the
+#      editable `core` directory:  pip install -e "core[dev]"
+#   5. Runs `make check`, which executes:
+#        - ruff lint + format check  (core/src/ and core/tests/)
+#        - mypy strict type check    (core/src/modelroot/)
+#        - pytest -m "not slow and not docker and not e2e"  (core/tests/)
+#   6. Does NOT require secrets, external datasets, or network access from
+#      tests.  All tests use only the installed package and stdlib.
+#   Caching: pip's cache directory is cached via actions/cache, keyed on the
+#   OS, Python version, and the hash of core/pyproject.toml.  This keeps the
+#   setup step fast without over-engineering.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: check (Python 3.11)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-py3.11-pip-${{ hashFiles('core/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-py3.11-pip-
+
+      - name: Install package and dev dependencies
+        run: pip install -e "core[dev]"
+
+      - name: Run make check
+        run: make check
