@@ -2,8 +2,8 @@
 
 # ---------------------------------------------------------------------------
 # Data — never commit raw or processed datasets
-# ---------------------------------------------------------------------------
-data/
+# Anchored to repo root so it doesn't match core/src/modelroot/data/
+/data/
 *.pkl
 *.pickle
 

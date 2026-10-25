@@ -1,0 +1,13 @@
+age,income,education,label
+25,50000,college,yes
+35,75000,graduate,no
+45,90000,college,yes
+28,42000,highschool,no
+52,120000,graduate,yes
+31,58000,college,no
+38,82000,graduate,yes
+27,39000,highschool,no
+60,95000,college,yes
+42,67000,graduate,no
+55,110000,graduate,yes
+33,54000,college,no
