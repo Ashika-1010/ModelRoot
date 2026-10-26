@@ -108,13 +108,13 @@ def _infer_column_types(
         n_nonnull = len(non_null)
         missing_frac = 1.0 - n_nonnull / n_total if n_total > 0 else 1.0
 
-        # Constant column â€” drop
+        # Constant column drop
         if n_nonnull > 0 and non_null.nunique() == 1:
             dropped.append((col, "constant column"))
             warnings.append(f"Column '{col}' is constant and was dropped.")
             continue
 
-        # Datetime â€” drop with warning
+        # Datetime drop with warning
         if _try_datetime(series) >= _DATETIME_FRAC:
             dropped.append((col, "datetime-like column"))
             warnings.append(
@@ -122,7 +122,7 @@ def _infer_column_types(
             )
             continue
 
-        # High missingness â€” warn but keep
+        # High missingness warn but keep
         if missing_frac > _HIGH_MISSING_FRAC:
             warnings.append(f"Column '{col}' has {missing_frac:.0%} missing values.")
 
@@ -164,7 +164,7 @@ def validate_for_analysis(
     warnings: list[str] = []
     dropped: list[tuple[str, str]] = []
 
-    # â”€â”€ Target column â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Target column
     if config.target not in df.columns:
         raise ContractViolation(
             ErrorCode.TARGET_MISSING,
@@ -173,14 +173,14 @@ def validate_for_analysis(
 
     target_series = df[config.target].replace("", np.nan)
 
-    # â”€â”€ Target nulls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Target nulls
     if target_series.isna().any():
         raise ContractViolation(
             ErrorCode.TARGET_HAS_NULLS,
             f"Target column '{config.target}' contains missing values.",
         )
 
-    # â”€â”€ Binary target â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Binary target
     unique_classes = set(target_series.dropna().astype(str).unique())
     if len(unique_classes) != 2:
         raise ContractViolation(
@@ -189,7 +189,7 @@ def validate_for_analysis(
             f"found {len(unique_classes)}: {sorted(unique_classes)}",
         )
 
-    # â”€â”€ Positive class â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Positive class
     pos = str(config.positive_class)
     if pos not in unique_classes:
         raise ContractViolation(
@@ -197,18 +197,18 @@ def validate_for_analysis(
             f"positive_class '{pos}' not found among target values {sorted(unique_classes)}.",
         )
 
-    # â”€â”€ Encode y as 0/1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Encode y as 0/1
     y = (target_series.astype(str) == pos).astype(int)
     y.name = config.target
 
-    # â”€â”€ Minimum row count â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Minimum row count
     if len(df) < _MIN_FEATURE_ROWS:
         raise ContractViolation(
             ErrorCode.TOO_FEW_ROWS,
             f"Dataset has only {len(df)} rows; minimum is {_MIN_FEATURE_ROWS}.",
         )
 
-    # â”€â”€ Class size â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Class size
     class_counts = y.value_counts()
     for cls_val, cnt in class_counts.items():
         if cnt < _MIN_CLASS_SIZE:
@@ -218,14 +218,14 @@ def validate_for_analysis(
                 f"Class '{label}' has only {cnt} sample(s); minimum is {_MIN_CLASS_SIZE}.",
             )
 
-    # â”€â”€ ID columns â€” exclude with warning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ID columns exclude with warning
     id_cols = set(config.metadata.id_columns)
     for id_col in config.metadata.id_columns:
         if id_col in df.columns and id_col != config.target:
             dropped.append((id_col, "declared id_column"))
             warnings.append(f"Column '{id_col}' is declared as an id_column and was excluded.")
 
-    # â”€â”€ Column type inference (skip target and id_columns) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Column type inference (skip target and id_columns)
     exclude = {config.target} | id_cols
     column_types, feature_cols = _infer_column_types(df, exclude, warnings, dropped)
 

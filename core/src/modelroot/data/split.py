@@ -155,7 +155,7 @@ def make_split(
 
     X = df[feature_cols].copy()
 
-    # â”€â”€ Split modes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Split modes
 
     if split_cfg.mode == SplitMode.single_file:
         # Stratified 80/20 on row positions; preserve original index
@@ -221,7 +221,7 @@ def make_split(
             ).astype(int)
             holdout_y_raw.index = holdout_idx
         else:
-            # No target in test file â€” create a dummy (M5 will handle this properly)
+            # No target in test file create a dummy (M5 will handle this properly)
             holdout_y_raw = pd.Series(0, index=holdout_idx)
 
         X_train = X.loc[train_idx]
@@ -265,7 +265,7 @@ def make_split(
     X_holdout = X.loc[holdout_idx]
     y_holdout = y.loc[holdout_idx]
 
-    # â”€â”€ Optional current dataset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Optional current dataset
     X_current = None
     y_current_series = None
     if config.current_path is not None:

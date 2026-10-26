@@ -96,20 +96,20 @@ def load_csv(path: str | Path, limits: Limits | None = None) -> pd.DataFrame:
     # ── 3. Encoding: accept UTF-8 or UTF-8-BOM only ───────────────────────
     try:
         prefix.decode("utf-8-sig")  # accepts both UTF-8 and UTF-8-BOM
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as err:
         raise ContractViolation(
             ErrorCode.BAD_ENCODING,
             "File is not valid UTF-8 or UTF-8-BOM.",
-        )
+        ) from err
 
     # Full decode attempt to catch encoding errors beyond the prefix
     try:
         full_text = path.read_bytes().decode("utf-8-sig")
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as err:
         raise ContractViolation(
             ErrorCode.BAD_ENCODING,
             "File contains characters that cannot be decoded as UTF-8.",
-        )
+        ) from err
 
     # ── 4. Duplicate header detection on raw line ─────────────────────────
     first_line = full_text.split("\n")[0]
@@ -125,8 +125,8 @@ def load_csv(path: str | Path, limits: Limits | None = None) -> pd.DataFrame:
     header_reader = csv.reader(io.StringIO(first_line))
     try:
         raw_cols = next(header_reader)
-    except StopIteration:
-        raise ContractViolation(ErrorCode.NO_HEADER, "Could not parse header row.")
+    except StopIteration as err:
+        raise ContractViolation(ErrorCode.NO_HEADER, "Could not parse header row.") from err
 
     # Strip whitespace from column names (pandas does not by default)
     stripped = [c.strip() for c in raw_cols]
@@ -157,8 +157,10 @@ def load_csv(path: str | Path, limits: Limits | None = None) -> pd.DataFrame:
             na_values=[],
             encoding="utf-8",
         )
-    except pd.errors.EmptyDataError:
-        raise ContractViolation(ErrorCode.NO_HEADER, "File is empty or has no parsable rows.")
+    except pd.errors.EmptyDataError as err:
+        raise ContractViolation(
+            ErrorCode.NO_HEADER, "File is empty or has no parsable rows."
+        ) from err
 
     if len(df_probe) > limits.max_rows:
         raise ContractViolation(

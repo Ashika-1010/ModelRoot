@@ -45,7 +45,7 @@ def profile(
 
     # ── Per-column profiles ────────────────────────────────────────────────
     dropped_names = {name for name, _ in dropped}
-    dropped_reasons = {name: reason for name, reason in dropped}
+    dropped_reasons = dict(dropped)
 
     column_profiles: list[ColumnProfile] = []
 

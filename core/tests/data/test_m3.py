@@ -63,10 +63,7 @@ def _make_validated(n: int = 40, tmp_path: pathlib.Path | None = None) -> tuple:
     """Return (validated_dataset, config, tmp_path) with n balanced rows."""
     import tempfile
 
-    if tmp_path is None:
-        td = pathlib.Path(tempfile.mkdtemp())
-    else:
-        td = tmp_path
+    td = pathlib.Path(tempfile.mkdtemp()) if tmp_path is None else tmp_path
     rows = "\n".join(
         f"{20 + i},{50000 + i * 1000},{'yes' if i % 2 == 0 else 'no'}" for i in range(n)
     )
@@ -379,7 +376,7 @@ def test_preprocessor_missing_values_imputed(tmp_path: pathlib.Path) -> None:
     # 25 rows, some missing
     ages = [str(20 + i) if i % 5 != 0 else "" for i in range(30)]
     labels = ["yes" if i % 2 == 0 else "no" for i in range(30)]
-    rows = "\n".join(f"{a},{l}" for a, l in zip(ages, labels, strict=False))
+    rows = "\n".join(f"{a},{lbl}" for a, lbl in zip(ages, labels, strict=False))
     p = tmp_path / "t.csv"
     p.write_text("age,label\n" + rows, encoding="utf-8")
     df = load_csv(p)
@@ -403,7 +400,7 @@ def test_preprocessor_scale_adds_standard_scaler(tmp_path: pathlib.Path) -> None
 
     # Get the pipeline from the transformers list (not named_transformers_ which needs fit)
     def _get_numeric_steps(ct: ColumnTransformer) -> list:
-        for name, transformer, cols in ct.transformers:
+        for name, transformer, _cols in ct.transformers:
             if name == "numeric":
                 return transformer.steps  # type: ignore[union-attr]
         return []
