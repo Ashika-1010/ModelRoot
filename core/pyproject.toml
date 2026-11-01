@@ -24,6 +24,9 @@ dev = [
     "mypy==1.18.2",
 ]
 
+[project.scripts]
+modelroot = "modelroot.cli.main:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

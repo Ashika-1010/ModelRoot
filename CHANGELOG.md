@@ -130,3 +130,57 @@ Versions correspond to milestones; semantic versioning begins at v1.0 (M36).
 - `pyproject.toml` `[tool.mypy]` `python_version` set to `"3.12"` (tooling
   only; runtime remains `>=3.11`). Our source code uses no 3.12-only syntax.
 - `pytest.ini` `filterwarnings` added to suppress pandas datetime UserWarning.
+
+## [Unreleased — M5] — 2026-10-10
+
+### Added
+
+- `core/src/modelroot/assessment/` package: `__init__.py`, `metrics.py`, `baseline.py`.
+- Eight classification metrics: `accuracy`, `balanced_accuracy`, `macro_f1`, `f1`,
+  `precision`, `recall`, `roc_auc`, `pr_auc` (positive class = 1).
+- `METRIC_NAMES`, `LABEL_METRICS`, `PROBA_METRICS`, `UndefinedMetric`, `metric_fn`,
+  `needs_proba`, `compute_metrics`.
+- Frozen `PredictionSet` and `BaselineRun` dataclasses.
+- `fit_baseline(adapter, split)` — clones adapter, fits on train, predicts on all
+  splits, computes per-split metrics, skips undefined metrics with notes.
+- `dummy_baseline(split)` — majority-class predictor with constant prevalence score.
+- 47 tests: sklearn parity, hand-computed examples, single-class validation,
+  determinism, all four algorithms, dummy baseline, end-to-end M2-M5 integration.
+
+## [Unreleased — M6] — 2026-10-10
+
+### Added
+
+- `core/src/modelroot/config/` package: `Thresholds` pydantic model
+  (`headroom=0.03`, `gap=0.10`, `current_drop=0.03`, `extra="forbid"`, frozen).
+- `core/src/modelroot/assessment/reference_panel.py`: `PanelEntry`, `PanelResult`,
+  `fit_reference_panel` — evaluates LR, RF, HGB at M4 defaults, deterministic seeds,
+  stable tie-breaking by algorithm order.
+- `core/src/modelroot/assessment/verdict.py`: `get_metric_value`, `assess`,
+  `assess_only` — four underperformance rules (headroom, expected score, gap,
+  current drop), fixed reason ordering, neutral headline.
+- `core/src/modelroot/engine/pipeline.py`: re-exports `assess_only`.
+- `core/src/modelroot/cli/main.py` and `__main__.py`: `modelroot assess` CLI with
+  `--target`, `--positive-class`, `--algorithm`, `--params`, `--test`, `--current`,
+  `--metric`, `--seed`, `--out`; exit codes 0/1/2.
+- Console script `modelroot` registered in `core/pyproject.toml`.
+- 21 tests: thresholds, rule boundaries, panel selection, deterministic output,
+  CLI help/success/error, expected-score rule, dummy metrics.
+
+## [Unreleased — M7] — 2026-10-10
+
+### Added
+
+- `core/src/modelroot/stats/` package: `__init__.py`, `bootstrap.py`, `effects.py`.
+- `BootstrapResult`, `CIResult`, `BootstrapError` types.
+- `paired_bootstrap` — shared-index resampling, vectorised fast path for label
+  metrics, generic path for AUC, percentile CI, `delta = metric_b - metric_a`,
+  invalid-resample policy (>20% raises `BootstrapError`).
+- `bootstrap_ci` — single-sample bootstrap CI.
+- `two_sample_bootstrap_diff` — independent resampling per dataset.
+- `EffectClass` enum and `classify_effect` — four effect classes with exact
+  boundary semantics (no epsilon).
+- 29 tests: identity, antisymmetry, determinism, delta sign, validation,
+  fast-path parity, invalid-resample policy, effect boundaries, coverage
+  simulation (300 trials), CI width vs n, 10k-row performance, end-to-end
+  M2-M5-M7 integration.
