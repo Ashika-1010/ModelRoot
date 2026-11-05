@@ -63,3 +63,10 @@ def test_delta_min_zero_raises() -> None:
 def test_ci_inverted_raises() -> None:
     with pytest.raises(ValueError, match="ci_low"):
         classify_effect(0.05, 0.09, 0.01, 0.02)
+
+
+def test_bootstrap_error_is_value_error() -> None:
+    """BootstrapError must be a subclass of ValueError (regression guard)."""
+    from modelroot.stats.bootstrap import BootstrapError
+
+    assert issubclass(BootstrapError, ValueError)

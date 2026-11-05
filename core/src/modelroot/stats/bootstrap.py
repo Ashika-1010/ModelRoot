@@ -35,11 +35,14 @@ _BLOCK = 100  # resampling block size
 # ---------------------------------------------------------------------------
 
 
-class BootstrapError(Exception):
+class BootstrapError(ValueError):
     """Raised when too many bootstrap resamples are invalid.
 
     Specifically raised when *strictly more than* 20 % of resamples yield
     an undefined metric (e.g. single class in AUC computation).
+
+    Inherits from ``ValueError`` so callers can catch it generically
+    alongside other value-validation errors.
     """
 
 
