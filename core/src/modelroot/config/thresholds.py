@@ -55,3 +55,8 @@ class Thresholds(BaseModel):
     holdout_min_n: int = 200
     holdout_min_pos: int = 30
     ci_width_max: float = 0.10
+
+    # M11 overfitting hypothesis thresholds
+    gap_rel: float = 0.15
+    gap_shrink_min: float = 0.30
+    consistency_min: float = 0.80

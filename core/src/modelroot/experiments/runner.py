@@ -175,6 +175,71 @@ class ExperimentRunner:
             y_proba_b=y_proba_b,
         )
 
+        # Repeated subsampling on training workspace
+        repeat_deltas: list[float] = []
+        consistency_val: float | None = None
+        nb_contract = None
+
+        factory = getattr(outcome, "factory", None)
+        if (
+            spec.repeats > 0
+            and callable(factory)
+            and hasattr(ctx, "split")
+            and ctx.split is not None
+        ):
+            from modelroot.stats.bootstrap import BootstrapError
+            from modelroot.stats.nadeau_bengio import (
+                corrected_resampled_ttest,
+                nb_to_contract,
+            )
+            from modelroot.stats.repeated import (
+                consistency,
+                repeated_subsample_deltas,
+            )
+
+            self._budget.check()
+            base_adapter = getattr(baseline_run, "adapter", None)
+            if base_adapter is not None:
+
+                def make_a() -> object:
+                    return base_adapter.clone_with()
+
+                make_b = factory
+                rep_seed = spec.seed
+                if hasattr(ctx, "seeds") and ctx.seeds is not None:
+                    try:
+                        rep_seed = ctx.seeds.spawn(f"{spec.id}:repeats")
+                    except Exception:
+                        rep_seed = spec.seed
+
+                try:
+                    rep_result = repeated_subsample_deltas(
+                        make_a=make_a,
+                        make_b=make_b,
+                        X=ctx.split.X_train,
+                        y=ctx.split.y_train,
+                        metric=spec.metric,
+                        J=spec.repeats,
+                        seed=rep_seed,
+                    )
+                    repeat_deltas = rep_result.deltas
+                    if repeat_deltas:
+                        consistency_val = consistency(repeat_deltas)
+                        alpha = getattr(getattr(ctx, "thresholds", None), "alpha", 0.05)
+                        nb_raw = corrected_resampled_ttest(
+                            repeat_deltas,
+                            n_train=rep_result.n_train,
+                            n_test=rep_result.n_test,
+                            alpha=alpha,
+                        )
+                        nb_contract = nb_to_contract(nb_raw)
+                except BudgetExceeded:
+                    raise
+                except (ValueError, BootstrapError):
+                    repeat_deltas = []
+                    consistency_val = None
+                    nb_contract = None
+
         runtime_s = time.monotonic() - t0
 
         return ExperimentResult(
@@ -187,5 +252,9 @@ class ExperimentRunner:
             ci_high=boot_result.ci_high,
             n_eval=n_eval,
             n_valid_boot=boot_result.n_valid,
+            repeat_deltas=repeat_deltas,
+            consistency=consistency_val,
+            nb=nb_contract,
             runtime_s=runtime_s,
+            notes=list(getattr(outcome, "notes", [])),
         )

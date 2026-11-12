@@ -25,7 +25,7 @@ from modelroot.experiments.budget import BudgetExceeded, BudgetTracker
 from modelroot.experiments.cache import PredictionCache
 from modelroot.experiments.runner import ExperimentFailure, ExperimentRunner
 from modelroot.hypotheses.base import Applicability, Hypothesis, HypothesisContext
-from modelroot.hypotheses.registry import get_registry
+from modelroot.hypotheses.registry import default_hypotheses
 from modelroot.models.registry import get_model
 from modelroot.schemas.config import AnalysisConfig
 from modelroot.schemas.experiment import ExperimentResult, ExperimentSpec
@@ -159,7 +159,7 @@ def diagnose(
         thresholds = Thresholds()
 
     if hypotheses is None:
-        hypotheses = get_registry()
+        hypotheses = list(default_hypotheses())
 
     t_start = time.monotonic()
     timings: dict[str, float] = {}
@@ -203,6 +203,8 @@ def diagnose(
     )
     timings["assess"] = time.monotonic() - t0
 
+    budget = BudgetTracker(config.budget_s)
+
     # Build context for hypothesis evaluation
     ctx = HypothesisContext(
         split=prep.split,
@@ -210,9 +212,10 @@ def diagnose(
         config=config,
         col_types=prep.col_types,
         seeds=prep.sm,
+        thresholds=thresholds,
+        budget_check=budget.check,
     )
 
-    budget = BudgetTracker(config.budget_s)
     cache = PredictionCache()
     runner = ExperimentRunner(ctx=ctx, cache=cache, budget=budget)
 

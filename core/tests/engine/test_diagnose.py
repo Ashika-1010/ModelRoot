@@ -206,10 +206,9 @@ def test_register_and_clear_registry() -> None:
 
 @pytest.mark.integration
 def test_diagnose_with_no_hypotheses(tmp_path: pathlib.Path) -> None:
-    """diagnose with empty registry returns AssessmentResult + empty hypotheses."""
+    """diagnose with explicit empty list returns AssessmentResult + empty hypotheses."""
     config = _make_config(tmp_path)
-    clear_registry()
-    result = diagnose(config)
+    result = diagnose(config, hypotheses=[])
     assert result.status == "completed"
     assert len(result.hypotheses) == 0
     assert result.assessment is not None
@@ -359,7 +358,7 @@ def test_diagnose_run_experiments_false(tmp_path: pathlib.Path) -> None:
 @pytest.mark.integration
 def test_diagnose_result_has_fingerprints(tmp_path: pathlib.Path) -> None:
     config = _make_config(tmp_path)
-    result = diagnose(config)
+    result = diagnose(config, hypotheses=[])
     assert len(result.dataset_fingerprint) == 64
     assert len(result.split_fingerprint) == 64
     assert len(result.reproducibility_hash) == 64
@@ -368,7 +367,7 @@ def test_diagnose_result_has_fingerprints(tmp_path: pathlib.Path) -> None:
 @pytest.mark.integration
 def test_diagnose_result_has_timings(tmp_path: pathlib.Path) -> None:
     config = _make_config(tmp_path)
-    result = diagnose(config)
+    result = diagnose(config, hypotheses=[])
     assert "prepare" in result.timings
     assert "assess" in result.timings
     assert "total" in result.timings

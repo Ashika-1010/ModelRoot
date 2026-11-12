@@ -91,6 +91,7 @@ def test_strict_markers_rejects_unknown_marker(tmp_path: pathlib.Path) -> None:
         ],
         capture_output=True,
         text=True,
+        cwd=tmp_path,
     )
 
     assert result.returncode != 0, (

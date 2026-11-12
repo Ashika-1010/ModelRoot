@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from modelroot.config.thresholds import Thresholds
 from modelroot.schemas.common import HypothesisType
 from modelroot.schemas.hypothesis import HypothesisResult, TriggerResult
 
@@ -20,6 +22,8 @@ class HypothesisContext:
         config: The analysis configuration.
         col_types: Column type mapping for model instantiation.
         seeds: Seed manager for reproducible randomness.
+        thresholds: Numerical thresholds for decisions.
+        budget_check: Optional zero-arg callable checking wall-clock budget.
     """
 
     split: Any  # SplitData
@@ -27,6 +31,8 @@ class HypothesisContext:
     config: Any  # AnalysisConfig
     col_types: dict[str, str]
     seeds: Any  # SeedManager
+    thresholds: Thresholds | None = None
+    budget_check: Callable[[], None] | None = None
 
 
 @dataclass(frozen=True)
