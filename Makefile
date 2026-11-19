@@ -15,7 +15,7 @@
 #   test       — pytest excluding slow/docker/e2e markers
 #   test-slow  — pytest including slow tests (excludes docker and e2e)
 
-.PHONY: check lint type test test-slow
+.PHONY: check lint type test test-slow bench bench-check
 
 # ---------------------------------------------------------------------------
 # check: full gate (mirrors what CI runs on every push)
@@ -31,20 +31,27 @@ check: lint type
 # lint: ruff check + format verification
 # ---------------------------------------------------------------------------
 lint:
-	ruff check core/src/ core/tests/
-	ruff format --check core/src/ core/tests/
+	ruff check core/src/ core/tests/ benchmark/modelroot_bench/ benchmark/tests/
+	ruff format --check core/src/ core/tests/ benchmark/modelroot_bench/ benchmark/tests/
 
 # ---------------------------------------------------------------------------
-# type: strict mypy on the core package
+# type: strict mypy on the core package and benchmark package
 # ---------------------------------------------------------------------------
 type:
 	mypy --config-file core/pyproject.toml core/src/modelroot/
+	mypy --config-file benchmark/pyproject.toml benchmark/modelroot_bench/
 
 # ---------------------------------------------------------------------------
 # test: fast tests (no slow / docker / e2e markers)
 # ---------------------------------------------------------------------------
 test:
-	pytest -m "not slow and not docker and not e2e" core/tests/
+	pytest -m "not slow and not docker and not e2e" core/tests/ benchmark/tests/
+
+# ---------------------------------------------------------------------------
+# bench: benchmark mini grid end-to-end
+# ---------------------------------------------------------------------------
+bench:
+	pytest -m "bench" benchmark/tests/
 
 # ---------------------------------------------------------------------------
 # test-slow: all tests that are not docker/e2e (includes slow)

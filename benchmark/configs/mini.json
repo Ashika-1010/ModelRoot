@@ -1,0 +1,119 @@
+{
+  "name": "mini",
+  "description": "Mini benchmark grid for CI and fast validation (~12 scenarios).",
+  "scenarios": [
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "clean_control",
+      "injections": [],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S1"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S2"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S3"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "decision_tree",
+      "scenario_class": "clean_control",
+      "injections": [],
+      "seed": 43,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S2"}
+      ],
+      "seed": 43,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "random_forest",
+      "scenario_class": "clean_control",
+      "injections": [],
+      "seed": 44,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S1"}
+      ],
+      "seed": 44,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S2"}
+      ],
+      "seed": 44,
+      "role": "dev"
+    },
+    {
+      "dataset": "sklearn_breast_cancer",
+      "model": "random_forest",
+      "scenario_class": "clean_control",
+      "injections": [],
+      "seed": 45,
+      "role": "dev"
+    },
+    {
+      "dataset": "sklearn_breast_cancer",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S2"}
+      ],
+      "seed": 45,
+      "role": "dev"
+    },
+    {
+      "dataset": "sklearn_breast_cancer",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "overfitting", "severity": "S3"}
+      ],
+      "seed": 45,
+      "role": "dev"
+    }
+  ]
+}
+

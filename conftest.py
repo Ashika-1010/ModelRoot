@@ -9,3 +9,8 @@ from pathlib import Path
 _tests_root = Path(__file__).parent / "core" / "tests"
 if str(_tests_root) not in sys.path:
     sys.path.insert(0, str(_tests_root))
+
+# Make benchmark package importable
+_bench_root = Path(__file__).parent / "benchmark"
+if str(_bench_root) not in sys.path:
+    sys.path.insert(0, str(_bench_root))

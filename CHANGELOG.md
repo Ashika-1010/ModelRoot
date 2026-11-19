@@ -184,3 +184,26 @@ Versions correspond to milestones; semantic versioning begins at v1.0 (M36).
   fast-path parity, invalid-resample policy, effect boundaries, coverage
   simulation (300 trials), CI width vs n, 10k-row performance, end-to-end
   M2-M5-M7 integration.
+
+## [Unreleased — M12] — 2026-11-12
+
+### Added
+
+- `benchmark/` package (`modelroot_bench`): benchmark architecture, ground truth, and scoring engine.
+- `modelroot_bench.scenario`: `ScenarioSpec`, `GroundTruth`, `InjectedFailure`, `InjectionSpec`, `ScenarioResult`, `BenchmarkRecord`.
+- `modelroot_bench.io`: streaming JSONL serialization and deserialization (`write_jsonl`, `read_jsonl`, `read_benchmark_records`).
+- `modelroot_bench.scoring`: multidimensional benchmark evaluation (§6.4) including lenient ($S$) and strict ($S^*$) detection sets, Fix F4 type-level aggregation and independent H3 subtype evaluation, `no_effect` recall exclusion, per-hypothesis and macro Precision/Recall/F1, raw and adjusted False Positive Rate across scenario classes, single-failure Top-1 accuracy and Mean Reciprocal Rank (MRR), multi-failure Jaccard, status calibration reliability table, severity-response curves, timing, and deterministic bootstrap percentile confidence intervals.
+- `modelroot_bench.runner`: benchmark scenario runner skeleton.
+- 19 tests in `benchmark/tests/` validating scoring arithmetic, edge cases (no positives recall is None), adjusted-FP logic, H3 subtype separation, and bootstrap determinism.
+
+## [Unreleased — M13] — 2026-11-12
+
+### Added
+
+- `modelroot_bench.datasets`: dataset registry (`DatasetSpec`) and offline built-in datasets (`synthetic_easy`, `synthetic_medium`, `synthetic_hard`, `sklearn_breast_cancer`).
+- `modelroot_bench.inject`: failure injector framework (`Injector`, `InjectedScenario`), clean control baseline injector (`CleanControlInjector`), and H1 overfitting injector (`OverfittingInjector`) supporting severities S1/S2/S3, 30 Gaussian noise features, and high-capacity model parameters.
+- `modelroot_bench.oracle`: oracle impact calculation measuring performance degradation against clean control on held-out data with `no_effect` gate (<0.02).
+- `modelroot_bench.grid`: deterministic scenario expansion (`build_grid`, `load_grid_config`) and mini benchmark grid configuration (`benchmark/configs/mini.json`).
+- `modelroot_bench.runner`: end-to-end pipeline execution connecting scenarios and matching clean controls directly to `modelroot.engine.pipeline.diagnose()`.
+- `modelroot_bench.cli`: `modelroot-bench` CLI supporting `run` and `score` subcommands.
+- 14 integration and benchmark tests executing the mini grid end-to-end in < 1 minute, generating the first measured benchmark report for H1.
