@@ -272,12 +272,13 @@ def _run_diagnose(args: argparse.Namespace) -> None:
     print(f"Headline  : {result.assessment.headline}")
 
     if result.hypotheses:
-        print("\n# | hypothesis      | status           | delta  | severity")
-        print("-" * 65)
+        print("\n# | hypothesis          | status           | delta  | severity")
+        print("-" * 69)
         for i, h in enumerate(result.hypotheses, 1):
+            h_name = f"{h.type.value}:{h.subtype}" if getattr(h, "subtype", None) else h.type.value
             delta_str = f"{h.effect.delta:+.3f}" if h.effect else "  n/a "
             sev = h.severity.value if h.severity else "—"
-            print(f"{i:2d}| {h.type.value:<16} | {h.status.value:<16} | {delta_str} | {sev}")
+            print(f"{i:2d}| {h_name:<20} | {h.status.value:<16} | {delta_str} | {sev}")
 
     if result.warnings:
         print("\nWarnings:")

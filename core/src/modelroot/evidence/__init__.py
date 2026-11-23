@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from modelroot.evidence.rules import (
+    RULE_IM_D1,
+    RULE_IM_D2,
     RULE_SET_VERSION,
     Criterion,
     Rule,
@@ -20,6 +22,8 @@ from modelroot.evidence.rules import (
 )
 
 __all__ = [
+    "RULE_IM_D1",
+    "RULE_IM_D2",
     "RULE_SET_VERSION",
     "Criterion",
     "Rule",

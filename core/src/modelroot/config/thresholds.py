@@ -60,3 +60,9 @@ class Thresholds(BaseModel):
     gap_rel: float = 0.15
     gap_shrink_min: float = 0.30
     consistency_min: float = 0.80
+
+    # M14 class imbalance hypothesis thresholds
+    minority_share: float = 0.20
+    acc_bacc_gap: float = 0.05
+    majority_margin: float = 0.02
+    minority_oof_min: int = 30

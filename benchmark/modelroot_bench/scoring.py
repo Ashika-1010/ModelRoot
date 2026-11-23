@@ -313,6 +313,8 @@ def score(
             all_targets.add(lbl)
             if _is_subtype(lbl):
                 all_targets.add(_type_level_name(lbl))
+        for sub in rec.ground_truth.expected_subtypes:
+            all_targets.add(_canonicalize_label(sub))
         if rec.result:
             for lbl in rec.result.statuses:
                 c_lbl = _canonicalize_label(lbl)
@@ -326,89 +328,7 @@ def score(
 
     # 2. Compute per-hypothesis metrics for lenient and strict
     def _evaluate_detection(strict: bool) -> tuple[dict[str, MetricScore], MetricScore]:
-        per_target: dict[str, MetricScore] = {}
-
-        for target in sorted(all_targets):
-            tp = 0
-            tp_recall = 0
-            fp = 0
-            fn = 0
-            adj_fp = 0
-
-            for rec in records:
-                gt = rec.ground_truth
-                res = rec.result or ScenarioResult(scenario_id=rec.spec.id)
-
-                # Check if target was injected
-                injected_labels = [_canonicalize_label(i.label) for i in gt.injected]
-                is_injected = (target in injected_labels) or any(
-                    _type_level_name(i) == target for i in injected_labels
-                )
-
-                # Determine diagnosed status for this target
-                statuses = _aggregate_statuses(res.statuses)
-                st = statuses.get(target, "not_triggered")
-                detected = _is_detected(st, strict=strict)
-
-                # Check clean control status for adjusted FP
-                ctrl_statuses = _aggregate_statuses(res.control_statuses)
-                ctrl_st = ctrl_statuses.get(target, "not_triggered")
-                natural_in_control = _is_detected(ctrl_st, strict=strict)
-
-                if is_injected:
-                    if gt.no_effect:
-                        # Injected failure with negligible impact (<0.02)
-                        # Excluded from recall; if detected, counts as FP (over-diagnosis)
-                        if detected:
-                            fp += 1
-                            if not natural_in_control:
-                                adj_fp += 1
-                    else:
-                        if detected:
-                            tp += 1
-                            tp_recall += 1
-                        else:
-                            fn += 1
-                else:
-                    if detected:
-                        fp += 1
-                        if not natural_in_control:
-                            adj_fp += 1
-
-            p, r, f, ap, af = _compute_p_r_f1(tp, tp_recall, fp, fn, adj_fp)
-            per_target[target] = MetricScore(
-                precision=p,
-                recall=r,
-                f1=f,
-                tp=tp,
-                fp=fp,
-                fn=fn,
-                adjusted_fp=adj_fp,
-                adjusted_precision=ap,
-                adjusted_f1=af,
-            )
-
-        # Macro aggregation
-        p_vals = [m.precision for m in per_target.values() if m.precision is not None]
-        r_vals = [m.recall for m in per_target.values() if m.recall is not None]
-        f_vals = [m.f1 for m in per_target.values() if m.f1 is not None]
-        ap_vals = [
-            m.adjusted_precision for m in per_target.values() if m.adjusted_precision is not None
-        ]
-        af_vals = [m.adjusted_f1 for m in per_target.values() if m.adjusted_f1 is not None]
-
-        macro = MetricScore(
-            precision=float(np.mean(p_vals)) if p_vals else None,
-            recall=float(np.mean(r_vals)) if r_vals else None,
-            f1=float(np.mean(f_vals)) if f_vals else None,
-            adjusted_precision=float(np.mean(ap_vals)) if ap_vals else None,
-            adjusted_f1=float(np.mean(af_vals)) if af_vals else None,
-            tp=sum(m.tp for m in per_target.values()),
-            fp=sum(m.fp for m in per_target.values()),
-            fn=sum(m.fn for m in per_target.values()),
-            adjusted_fp=sum(m.adjusted_fp for m in per_target.values()),
-        )
-        return per_target, macro
+        return _evaluate_detection_sample(records, all_targets, strict=strict)
 
     lenient_metrics, macro_lenient = _evaluate_detection(strict=False)
     strict_metrics, macro_strict = _evaluate_detection(strict=True)
@@ -655,23 +575,20 @@ def _evaluate_detection_sample(
     all_targets: set[str],
     strict: bool,
 ) -> tuple[dict[str, MetricScore], MetricScore]:
-    """Helper used during bootstrap resampling."""
+    """Helper used during detection evaluation and bootstrap resampling."""
     per_target: dict[str, MetricScore] = {}
 
-    for target in all_targets:
+    for target in sorted(all_targets):
         tp = 0
         tp_recall = 0
         fp = 0
         fn = 0
         adj_fp = 0
+        is_sub = _is_subtype(target)
 
         for rec in records:
             gt = rec.ground_truth
             res = rec.result or ScenarioResult(scenario_id=rec.spec.id)
-            injected_labels = [_canonicalize_label(i.label) for i in gt.injected]
-            is_injected = (target in injected_labels) or any(
-                _type_level_name(i) == target for i in injected_labels
-            )
             statuses = _aggregate_statuses(res.statuses)
             st = statuses.get(target, "not_triggered")
             detected = _is_detected(st, strict=strict)
@@ -680,25 +597,77 @@ def _evaluate_detection_sample(
             ctrl_st = ctrl_statuses.get(target, "not_triggered")
             natural_in_control = _is_detected(ctrl_st, strict=strict)
 
-            if is_injected:
-                if gt.no_effect:
-                    # Injected failure with negligible impact (<0.02)
-                    # Excluded from recall; if detected, counts as FP (over-diagnosis)
+            if is_sub:
+                # Subtype-level evaluation
+                # 1. Check if explicitly in expected_subtypes
+                expected: bool | None = None
+                for k, v in gt.expected_subtypes.items():
+                    if _canonicalize_label(k) == target:
+                        expected = bool(v)
+                        break
+
+                # 2. If not in expected_subtypes, check backward compatibility (M13 injected labels)
+                if expected is None:
+                    injected_labels = [_canonicalize_label(i.label) for i in gt.injected]
+                    if target in injected_labels:
+                        expected = True
+                    elif any(
+                        _type_level_name(i) == _type_level_name(target)
+                        for i in injected_labels
+                        if _is_subtype(i)
+                    ):
+                        # Another subtype of this same hypothesis was explicitly injected
+                        expected = False
+                    else:
+                        # Case without a meaningful ground-truth label for this subtype:
+                        # excluded from subtype precision/recall rather than treated as negative
+                        continue
+
+                if expected is True:
+                    if gt.no_effect:
+                        # Injected/expected failure with negligible impact (<0.02)
+                        # Excluded from recall; if detected, counts as FP (over-diagnosis)
+                        if detected:
+                            fp += 1
+                            if not natural_in_control:
+                                adj_fp += 1
+                    else:
+                        if detected:
+                            tp += 1
+                            tp_recall += 1
+                        else:
+                            fn += 1
+                else:  # expected is False
                     if detected:
                         fp += 1
                         if not natural_in_control:
                             adj_fp += 1
+            else:
+                # Parent-level evaluation (unchanged)
+                injected_labels = [_canonicalize_label(i.label) for i in gt.injected]
+                is_injected = (target in injected_labels) or any(
+                    _type_level_name(i) == target for i in injected_labels
+                )
+
+                if is_injected:
+                    if gt.no_effect:
+                        # Injected failure with negligible impact (<0.02)
+                        # Excluded from recall; if detected, counts as FP (over-diagnosis)
+                        if detected:
+                            fp += 1
+                            if not natural_in_control:
+                                adj_fp += 1
+                    else:
+                        if detected:
+                            tp += 1
+                            tp_recall += 1
+                        else:
+                            fn += 1
                 else:
                     if detected:
-                        tp += 1
-                        tp_recall += 1
-                    else:
-                        fn += 1
-            else:
-                if detected:
-                    fp += 1
-                    if not natural_in_control:
-                        adj_fp += 1
+                        fp += 1
+                        if not natural_in_control:
+                            adj_fp += 1
 
         p, r, f, ap, af = _compute_p_r_f1(tp, tp_recall, fp, fn, adj_fp)
         per_target[target] = MetricScore(

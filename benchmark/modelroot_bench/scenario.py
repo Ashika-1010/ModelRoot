@@ -57,6 +57,7 @@ class InjectionSpec(BaseModel):
     label: str
     severity: str = ""
     params: dict[str, Any] = Field(default_factory=dict)
+    expected_subtypes: dict[str, bool] = Field(default_factory=dict)
 
 
 class ScenarioSpec(BaseModel):
@@ -113,6 +114,7 @@ class GroundTruth(BaseModel):
     distractors: list[str] = Field(default_factory=list)
     impact: float = 0.0
     no_effect: bool = False
+    expected_subtypes: dict[str, bool] = Field(default_factory=dict)
 
 
 class ScenarioResult(BaseModel):

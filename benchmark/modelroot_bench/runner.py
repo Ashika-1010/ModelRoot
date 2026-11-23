@@ -70,7 +70,11 @@ def run_scenario(
 
         for h in raw.hypotheses:
             h_type = getattr(getattr(h, "type", None), "value", str(getattr(h, "type", "")))
-            label = getattr(h, "subtype", None) or h_type
+            subtype = getattr(h, "subtype", None)
+            if subtype:
+                label = str(subtype) if ":" in str(subtype) else f"{h_type}:{subtype}"
+            else:
+                label = h_type
             status_val = getattr(getattr(h, "status", None), "value", str(getattr(h, "status", "")))
             statuses[label] = status_val
             ranking.append(label)
@@ -172,6 +176,8 @@ def execute_scenario(
             model_spec=model_spec,
             params=primary_inj.params,
         )
+        if primary_inj.expected_subtypes and not injected_scen.ground_truth.expected_subtypes:
+            injected_scen.ground_truth.expected_subtypes = dict(primary_inj.expected_subtypes)
 
     # Oracle impact calculation
     impact, no_effect = oracle_impact(

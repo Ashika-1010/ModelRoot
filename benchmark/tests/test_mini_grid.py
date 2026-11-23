@@ -25,7 +25,7 @@ def test_mini_grid_end_to_end_scoring(tmp_path: pathlib.Path) -> None:
     """Execute the mini benchmark grid and produce the first measured H1 report."""
     cfg = load_grid_config("mini")
     specs = build_grid(cfg)
-    assert len(specs) == 12
+    assert len(specs) == 15
 
     ctrl_cache: dict[tuple[str, str, int], dict[str, str]] = {}
     records: list[BenchmarkRecord] = []
@@ -51,17 +51,21 @@ def test_mini_grid_end_to_end_scoring(tmp_path: pathlib.Path) -> None:
 
     # Score and print report
     report = score(loaded_recs, bootstrap=True, n_boot=200, seed=42)
-    assert report.n_scenarios == 12
+    assert report.n_scenarios == 15
 
     table = report.summary_table()
     print("\n" + table)
 
-    # Acceptance: H1 numbers printed and present in report
+    # Acceptance: H1 and H2 numbers printed and present in report
     assert "overfitting" in report.lenient_metrics
     of_lenient = report.lenient_metrics["overfitting"]
     assert of_lenient.tp >= 0
     assert of_lenient.precision is not None or of_lenient.tp + of_lenient.fp == 0
     assert of_lenient.recall is not None or of_lenient.tp + of_lenient.fn == 0
+
+    assert "imbalance" in report.lenient_metrics
+    imb_lenient = report.lenient_metrics["imbalance"]
+    assert imb_lenient.tp >= 0
 
 
 @pytest.mark.integration

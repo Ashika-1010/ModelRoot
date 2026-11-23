@@ -117,3 +117,20 @@ def register_builtin_datasets() -> None:
             description="Scikit-learn bundled breast cancer diagnostic dataset (n=569).",
         )
     )
+
+    register_dataset(
+        DatasetSpec(
+            name="synth_large",
+            load=lambda: make_synthetic_dataset(
+                n_samples=3000,
+                n_features=15,
+                n_informative=8,
+                class_sep=1.0,
+                seed=104,
+            ),
+            target="target",
+            positive="1",
+            role="dev",
+            description="Large synthetic binary classification problem (n=3000, 15 features).",
+        )
+    )

@@ -165,6 +165,38 @@ def clear_rule_registry() -> None:
     _RULE_REGISTRY.clear()
 
 
+# Built-in rules for H2 Class Imbalance (M14)
+RULE_IM_D1 = Rule(
+    id="IM-D1",
+    text=(
+        "Supported if accuracy <= majority + majority_margin or "
+        "accuracy - balanced_accuracy >= acc_bacc_gap."
+    ),
+    criteria=[
+        Criterion(id="acc_near_majority", weight=1.0, description="accuracy <= majority + 0.02"),
+        Criterion(
+            id="acc_bacc_gap", weight=1.0, description="accuracy - balanced_accuracy >= 0.05"
+        ),
+    ],
+)
+register_rule(RULE_IM_D1)
+
+RULE_IM_D2 = Rule(
+    id="IM-D2",
+    text=(
+        "Harm supported if chosen intervention improves holdout primary metric "
+        "by delta >= delta_min with CI excluding zero; rejected if CI upper < delta_min."
+    ),
+    criteria=[
+        Criterion(id="delta_min", weight=1.0, description="Δ >= delta_min"),
+        Criterion(id="ci_excludes_zero", weight=1.0, description="CI lower > 0"),
+        Criterion(id="adequately_powered", weight=1.0, description="Power gate passed"),
+        Criterion(id="minority_oof_adequate", weight=1.0, description="Minority OOF samples >= 30"),
+    ],
+)
+register_rule(RULE_IM_D2)
+
+
 # ---------------------------------------------------------------------------
 # Decision protocol
 # ---------------------------------------------------------------------------

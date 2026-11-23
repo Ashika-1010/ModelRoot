@@ -207,3 +207,25 @@ Versions correspond to milestones; semantic versioning begins at v1.0 (M36).
 - `modelroot_bench.runner`: end-to-end pipeline execution connecting scenarios and matching clean controls directly to `modelroot.engine.pipeline.diagnose()`.
 - `modelroot_bench.cli`: `modelroot-bench` CLI supporting `run` and `score` subcommands.
 - 14 integration and benchmark tests executing the mini grid end-to-end in < 1 minute, generating the first measured benchmark report for H1.
+
+## [Unreleased — M14] — 2026-11-19
+
+### Added
+
+- `core/src/modelroot/hypotheses/imbalance.py`: `ImbalanceHypothesis` (H2 Class Imbalance and Metric Distortion) supporting `distortion` (diagnostic rule `IM-D1`) and `harm` (intervention rule `IM-D2`) sub-claims, with trigger `IM-T1`, sample size gating, and uncalibrated threshold detection nuances.
+- `core/src/modelroot/experiments/interventions.py`: Four class imbalance interventions:
+  - `class_weight`: balanced class weighting adapter adjustment.
+  - `threshold_tune`: decision threshold calibration on predicted probabilities over training predictions.
+  - `oversample_train`: random oversampling of minority class inside training partition only, guarded by holdout-leakage assertions.
+  - `imbalance_best`: 3-fold stratified inner-CV candidate selection across class weighting, threshold tuning, and oversampling without touching holdout data.
+- `core/src/modelroot/config/thresholds.py`: Thresholds for H2: `minority_share=0.20`, `acc_bacc_gap=0.05`, `majority_margin=0.02`, `minority_oof_min=30`.
+- `core/src/modelroot/evidence/rules.py`: Registered `RULE_IM_D1` and `RULE_IM_D2`.
+- `core/src/modelroot/hypotheses/registry.py`: Registered `ImbalanceHypothesis` at index 1 in `default_hypotheses()`.
+- `core/src/modelroot/cli/main.py`: Updated CLI summary table formatting to display sub-claim namespaces (`{hypothesis}:{subtype}`) for granular diagnosis inspection.
+- `benchmark/modelroot_bench/datasets/synthetic.py`: Registered `synth_large` (n=3000, 15 features, class_sep=1.0) for imbalance benchmarking.
+- `benchmark/modelroot_bench/inject/imbalance.py`: `ImbalanceInjector` supporting severities S1 (1:5), S2 (1:20), and S3 (1:100).
+- `benchmark/modelroot_bench/inject/hard_negative_separable.py`: `HardNegativeSeparableInjector` (1:10 ratio with class_sep=3.0) negative control.
+- `benchmark/modelroot_bench/oracle.py`: Direction-aware `impact_from_results` calculation supporting higher-is-better and lower-is-better metrics.
+- `benchmark/modelroot_bench/runner.py`: Namespaced sub-claim translations (`{hypothesis}:{subtype}`) so results cleanly roll up into parent types.
+- `benchmark/configs/mini.json`: Extended mini grid to 15 scenarios, adding single-failure S1 and S2 imbalance scenarios and separable hard-negative control.
+- 16 new unit, integration, and benchmark tests covering H2 trigger, applicability, inner-CV leakage guards, distortion/harm evaluation, injectors, and end-to-end mini grid scoring.

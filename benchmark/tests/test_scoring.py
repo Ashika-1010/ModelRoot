@@ -26,6 +26,7 @@ def _make_record(
     top1: str | None = None,
     effects: dict[str, float] | None = None,
     runtime_s: float = 1.0,
+    expected_subtypes: dict[str, bool] | None = None,
 ) -> BenchmarkRecord:
     spec = ScenarioSpec(
         id=scenario_id,
@@ -40,6 +41,7 @@ def _make_record(
         injected=[InjectedFailure(label=lbl, severity="S1") for lbl in injected],
         impact=0.01 if no_effect else 0.05,
         no_effect=no_effect,
+        expected_subtypes=expected_subtypes or {},
     )
     res = ScenarioResult(
         scenario_id=scenario_id,
@@ -384,3 +386,162 @@ def test_no_effect_precision_and_recall_semantics() -> None:
     assert m.adjusted_fp == 1
     # Adjusted Precision: tp / (tp + adj_fp) = 1 / (1 + 1) = 0.5
     assert m.adjusted_precision == 0.5
+
+
+def test_subtype_correct_parent_and_subtype_detections() -> None:
+    """Validate Task 6.1: Correct parent and expected subtype detections count as TP."""
+    rec = _make_record(
+        "scen_imb",
+        "single_failure",
+        ["imbalance"],
+        {
+            "imbalance:distortion": "supported",
+            "imbalance:harm": "supported",
+        },
+        expected_subtypes={"imbalance:distortion": True, "imbalance:harm": True},
+    )
+    report = score([rec], bootstrap=False)
+
+    # Parent
+    m_parent = report.strict_metrics["imbalance"]
+    assert m_parent.tp == 1
+    assert m_parent.fp == 0
+    assert m_parent.fn == 0
+    assert m_parent.recall == 1.0
+    assert m_parent.precision == 1.0
+
+    # Subtype distortion
+    m_dist = report.strict_metrics["imbalance:distortion"]
+    assert m_dist.tp == 1
+    assert m_dist.fp == 0
+    assert m_dist.fn == 0
+    assert m_dist.recall == 1.0
+    assert m_dist.precision == 1.0
+
+    # Subtype harm
+    m_harm = report.strict_metrics["imbalance:harm"]
+    assert m_harm.tp == 1
+    assert m_harm.fp == 0
+    assert m_harm.fn == 0
+    assert m_harm.recall == 1.0
+    assert m_harm.precision == 1.0
+
+
+def test_subtype_missing_expected_subtype_counts_as_fn() -> None:
+    """Validate Task 6.2: An expected subtype that is not detected counts as FN."""
+    rec = _make_record(
+        "scen_miss",
+        "single_failure",
+        ["imbalance"],
+        {
+            "imbalance:distortion": "supported",
+            "imbalance:harm": "not_triggered",
+        },
+        expected_subtypes={"imbalance:distortion": True, "imbalance:harm": True},
+    )
+    report = score([rec], bootstrap=False)
+
+    m_harm = report.strict_metrics["imbalance:harm"]
+    assert m_harm.tp == 0
+    assert m_harm.fn == 1
+    assert m_harm.fp == 0
+    assert m_harm.recall == 0.0
+
+
+def test_subtype_unexpected_detection_counts_as_fp() -> None:
+    """Validate Task 6.3: Detecting an explicitly unexpected subtype counts as FP."""
+    rec = _make_record(
+        "scen_unexpected",
+        "hard_negative",
+        [],
+        {
+            "imbalance:distortion": "supported",
+            "imbalance:harm": "not_triggered",
+        },
+        expected_subtypes={"imbalance:distortion": False, "imbalance:harm": False},
+    )
+    report = score([rec], bootstrap=False)
+
+    m_dist = report.strict_metrics["imbalance:distortion"]
+    assert m_dist.tp == 0
+    assert m_dist.fp == 1
+    assert m_dist.fn == 0
+    assert m_dist.precision == 0.0
+    assert m_dist.recall is None
+
+    m_harm = report.strict_metrics["imbalance:harm"]
+    assert m_harm.tp == 0
+    assert m_harm.fp == 0
+    assert m_harm.fn == 0
+
+
+def test_subtype_unlabelled_scenario_excluded_from_scoring() -> None:
+    """Validate Task 6.4: Scenarios without ground-truth subtype label are excluded."""
+    recs = [
+        # Scenario with ground truth for imbalance:distortion
+        _make_record(
+            "scen_known",
+            "single_failure",
+            ["imbalance"],
+            {"imbalance:distortion": "supported"},
+            expected_subtypes={"imbalance:distortion": True},
+        ),
+        # Scenario from an unrelated failure type without imbalance subtype label
+        # Even if pipeline outputs not_triggered or inconclusive, it must not be treated as negative
+        _make_record(
+            "scen_unlabelled",
+            "single_failure",
+            ["overfitting"],
+            {"imbalance:distortion": "not_triggered"},
+            expected_subtypes={},  # unlabelled for imbalance:distortion
+        ),
+    ]
+    report = score(recs, bootstrap=False)
+
+    m_dist = report.strict_metrics["imbalance:distortion"]
+    # Only scen_known should be counted
+    assert m_dist.tp == 1
+    assert m_dist.fp == 0
+    assert m_dist.fn == 0
+    assert m_dist.recall == 1.0
+    assert m_dist.precision == 1.0
+
+
+def test_subtype_backward_compatibility_m13() -> None:
+    """Validate Task 6.5: Existing M13 leakage scenarios score unchanged."""
+    recs = [
+        _make_record(
+            "c1",
+            "single_failure",
+            ["leakage:duplicate"],
+            {
+                "leakage:duplicate": "supported",
+                "leakage:identifier": "not_triggered",
+            },
+        ),
+        _make_record(
+            "c2",
+            "single_failure",
+            ["leakage:identifier"],
+            {
+                "leakage:duplicate": "not_triggered",
+                "leakage:identifier": "rejected",
+            },
+        ),
+    ]
+    report = score(recs, bootstrap=False)
+
+    dup_m = report.lenient_metrics["leakage:duplicate"]
+    assert dup_m.tp == 1
+    assert dup_m.fn == 0
+    assert dup_m.recall == 1.0
+
+    id_m = report.lenient_metrics["leakage:identifier"]
+    assert id_m.tp == 0
+    assert id_m.fn == 1
+    assert id_m.recall == 0.0
+
+    leak_m = report.lenient_metrics["leakage"]
+    assert leak_m.tp == 1
+    assert leak_m.fn == 1
+    assert leak_m.recall == 0.5

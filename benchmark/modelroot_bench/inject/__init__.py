@@ -2,11 +2,15 @@
 
 from modelroot_bench.inject.base import InjectedScenario, Injector
 from modelroot_bench.inject.clean import CleanControlInjector
+from modelroot_bench.inject.hard_negative_separable import HardNegativeSeparableInjector
+from modelroot_bench.inject.imbalance import ImbalanceInjector
 from modelroot_bench.inject.overfitting import OverfittingInjector
 
 _INJECTORS: dict[str, type[Injector]] = {
     "clean": CleanControlInjector,
     "clean_control": CleanControlInjector,
+    "hard_negative_separable": HardNegativeSeparableInjector,
+    "imbalance": ImbalanceInjector,
     "overfitting": OverfittingInjector,
 }
 
@@ -26,6 +30,8 @@ def list_injectors() -> list[str]:
 
 __all__ = [
     "CleanControlInjector",
+    "HardNegativeSeparableInjector",
+    "ImbalanceInjector",
     "InjectedScenario",
     "Injector",
     "OverfittingInjector",

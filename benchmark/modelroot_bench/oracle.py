@@ -23,6 +23,34 @@ def _to_model_spec(spec: ModelSpec | dict[str, Any]) -> ModelSpec:
     return ModelSpec.model_validate(spec)
 
 
+def impact_from_results(
+    clean_score: float,
+    scenario_score: float,
+    metric: str = "macro_f1",
+    threshold: float = 0.02,
+) -> tuple[float, bool]:
+    """Compute direction-aware performance impact and no_effect flag.
+
+    For higher-is-better metrics, degradation is clean_score - scenario_score.
+    For lower-is-better metrics (loss, error, mse, etc.), degradation is
+    scenario_score - clean_score.
+
+    Args:
+        clean_score: Performance on clean baseline.
+        scenario_score: Performance on injected scenario.
+        metric: Evaluation metric name.
+        threshold: Threshold below which no_effect is True (default 0.02).
+
+    Returns:
+        Tuple of (impact_float, no_effect_bool).
+    """
+    lower_is_better = any(kw in metric.lower() for kw in ("loss", "error", "mse", "mae", "brier"))
+    impact = scenario_score - clean_score if lower_is_better else clean_score - scenario_score
+
+    no_effect = impact < threshold
+    return float(impact), bool(no_effect)
+
+
 def oracle_impact(
     clean_df: pd.DataFrame,
     scenario_df: pd.DataFrame,
@@ -120,7 +148,4 @@ def oracle_impact(
     )
     score_scen = float(fn(y_scen_te, pred_scen, proba_scen))
 
-    impact = score_clean - score_scen
-    no_effect = impact < 0.02
-
-    return float(impact), bool(no_effect)
+    return impact_from_results(score_clean, score_scen, metric=metric)

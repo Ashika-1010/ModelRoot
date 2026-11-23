@@ -56,15 +56,16 @@ def clear_registry() -> None:
 def default_hypotheses() -> tuple[type[Hypothesis], ...]:
     """Return the canonical ordered tuple of hypotheses for ``diagnose()``.
 
-    H1 (OverfittingHypothesis) is always first, followed by any hypotheses
-    in the global registry in registration order.
+    H1 (OverfittingHypothesis) is always first, followed by H2 (ImbalanceHypothesis),
+    followed by any hypotheses in the global registry in registration order.
 
     Returns:
         Tuple of hypothesis *classes* in run order.
     """
+    from modelroot.hypotheses.imbalance import ImbalanceHypothesis
     from modelroot.hypotheses.overfitting import OverfittingHypothesis
 
-    seen: list[type[Hypothesis]] = [OverfittingHypothesis]
+    seen: list[type[Hypothesis]] = [OverfittingHypothesis, ImbalanceHypothesis]
     for cls in _REGISTRY:
         if cls not in seen:
             seen.append(cls)

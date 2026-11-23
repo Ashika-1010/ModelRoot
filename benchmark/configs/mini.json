@@ -113,6 +113,36 @@
       ],
       "seed": 45,
       "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "imbalance", "severity": "S1"}
+      ],
+      "seed": 44,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "imbalance", "severity": "S2"}
+      ],
+      "seed": 44,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "random_forest",
+      "scenario_class": "hard_negative",
+      "injections": [
+        {"label": "hard_negative_separable", "severity": ""}
+      ],
+      "seed": 44,
+      "role": "dev"
     }
   ]
 }

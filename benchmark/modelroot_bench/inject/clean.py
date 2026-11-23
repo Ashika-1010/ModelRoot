@@ -40,6 +40,10 @@ class CleanControlInjector(Injector):
             distractors=[],
             impact=0.0,
             no_effect=False,
+            expected_subtypes={
+                "imbalance:distortion": False,
+                "imbalance:harm": False,
+            },
         )
 
         return InjectedScenario(
