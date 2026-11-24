@@ -1,9 +1,9 @@
-"""Base injector interface and InjectedScenario contract (M13)."""
+"""Base injector interface and InjectedScenario contract (M13/M16)."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import pandas as pd
@@ -21,12 +21,17 @@ class InjectedScenario:
         model_spec: Algorithm name and hyperparameters to evaluate.
         ground_truth: GroundTruth contract describing what was injected.
         clean_df: Uncorrupted reference DataFrame for oracle impact comparison.
+        current_df: Optional labeled or unlabeled post-deployment dataset.
+        direction: Direction of performance effect ('degradation' or 'inflation').
     """
 
     df: pd.DataFrame
     model_spec: dict[str, Any]
     ground_truth: GroundTruth
     clean_df: pd.DataFrame
+    current_df: pd.DataFrame | None = None
+    direction: str = "degradation"
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class Injector(ABC):

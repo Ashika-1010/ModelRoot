@@ -12,6 +12,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from modelroot.engine.pipeline import diagnose
 from modelroot.schemas.config import AnalysisConfig, SplitMode
 
@@ -105,11 +106,19 @@ def _run_diagnose_pipeline(
     model_spec: dict[str, Any],
     seed: int,
     budget_s: int = 120,
+    current_df: pd.DataFrame | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> Any:
     """Helper to run the actual ModelRoot diagnose pipeline on a DataFrame."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         csv_path = Path(tmp_dir) / "scenario.csv"
         df.to_csv(csv_path, index=False)
+
+        current_path_str: str | None = None
+        if current_df is not None:
+            curr_path = Path(tmp_dir) / "current.csv"
+            current_df.to_csv(curr_path, index=False)
+            current_path_str = str(curr_path)
 
         if "split" in df.columns:
             split_kwargs = {"mode": SplitMode.split_column, "split_column": "split"}
@@ -124,6 +133,8 @@ def _run_diagnose_pipeline(
             model_spec=model_spec,
             seed=seed,
             budget_s=budget_s,
+            current_path=current_path_str,
+            metadata=metadata or {},
         )
 
         return diagnose(config)
@@ -187,6 +198,7 @@ def execute_scenario(
         clean_model_spec=model_spec,
         scenario_model_spec=injected_scen.model_spec,
         seed=spec.seed,
+        direction=injected_scen.direction,
     )
     injected_scen.ground_truth.impact = impact
     injected_scen.ground_truth.no_effect = no_effect
@@ -204,6 +216,8 @@ def execute_scenario(
             positive_class=dataset_spec.positive,
             model_spec=injected_scen.model_spec,
             seed=spec.seed,
+            current_df=injected_scen.current_df,
+            metadata=injected_scen.metadata,
         )
         runtime = time.monotonic() - t0
         res = run_scenario(spec, lambda _: analysis).model_copy(update={"runtime_s": runtime})
@@ -248,6 +262,8 @@ def execute_scenario(
         positive_class=dataset_spec.positive,
         model_spec=injected_scen.model_spec,
         seed=spec.seed,
+        current_df=injected_scen.current_df,
+        metadata=injected_scen.metadata,
     )
     runtime = time.monotonic() - t0
     res = run_scenario(spec, lambda _: analysis).model_copy(

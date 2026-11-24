@@ -25,7 +25,7 @@ def test_mini_grid_end_to_end_scoring(tmp_path: pathlib.Path) -> None:
     """Execute the mini benchmark grid and produce the first measured H1 report."""
     cfg = load_grid_config("mini")
     specs = build_grid(cfg)
-    assert len(specs) == 15
+    assert len(specs) == 24
 
     ctrl_cache: dict[tuple[str, str, int], dict[str, str]] = {}
     records: list[BenchmarkRecord] = []
@@ -40,8 +40,8 @@ def test_mini_grid_end_to_end_scoring(tmp_path: pathlib.Path) -> None:
         records.append(rec)
 
     total_time = time.monotonic() - t0
-    # Must complete in under 3 minutes (180 seconds)
-    assert total_time < 180.0, f"Mini grid took {total_time:.2f}s, exceeding 180s threshold."
+    # Must complete in under 8 minutes (480 seconds) for 24 scenarios (~20s/scenario)
+    assert total_time < 480.0, f"Mini grid took {total_time:.2f}s, exceeding 480s threshold."
 
     # Validate JSONL roundtrip
     out_file = tmp_path / "mini_results.jsonl"
@@ -51,7 +51,7 @@ def test_mini_grid_end_to_end_scoring(tmp_path: pathlib.Path) -> None:
 
     # Score and print report
     report = score(loaded_recs, bootstrap=True, n_boot=200, seed=42)
-    assert report.n_scenarios == 15
+    assert report.n_scenarios == 24
 
     table = report.summary_table()
     print("\n" + table)

@@ -9,12 +9,13 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeVar
 
 import numpy as np
 import pandas as pd
 
 InterventionFn = Callable[[Any, dict[str, Any]], Any]
+F = TypeVar("F", bound=Callable[[Any, dict[str, Any]], Any])
 
 _INTERVENTIONS: dict[str, InterventionFn] = {}
 
@@ -37,13 +38,13 @@ class InterventionOutcome:
     holdout_pred: np.ndarray
     holdout_proba: np.ndarray
     fitted_adapter: Any
-    factory: Callable[[], Any]
+    factory: Callable[[], Any] | None = None
     current_pred: np.ndarray | None = None
     current_proba: np.ndarray | None = None
     notes: list[str] = field(default_factory=list)
 
 
-def intervention(name: str) -> Callable[[InterventionFn], InterventionFn]:
+def intervention(name: str) -> Callable[[F], F]:
     """Decorator to register an intervention function by *name*.
 
     Args:
@@ -56,7 +57,7 @@ def intervention(name: str) -> Callable[[InterventionFn], InterventionFn]:
         ValueError: If *name* is already registered.
     """
 
-    def decorator(fn: InterventionFn) -> InterventionFn:
+    def decorator(fn: F) -> F:
         if name in _INTERVENTIONS:
             raise ValueError(f"Intervention {name!r} is already registered.")
         _INTERVENTIONS[name] = fn
@@ -384,3 +385,54 @@ def imbalance_best_intervention(ctx: Any, params: dict[str, Any]) -> Interventio
     outcome.notes.append(f"threshold_prior_issue={threshold_prior_issue}")
 
     return outcome
+
+
+@intervention("drop_features")
+def drop_features_intervention(ctx: Any, params: dict[str, Any]) -> InterventionOutcome:
+    """E-LK-3 / E-LK-4: Drop specified feature subset and fit reduced model (M16)."""
+    from modelroot.models.registry import get_model
+
+    if ctx.budget_check:
+        ctx.budget_check()
+
+    raw_feats = params.get("features", "")
+    if isinstance(raw_feats, str):
+        features_to_drop = [f.strip() for f in raw_feats.split(",") if f.strip()]
+    elif isinstance(raw_feats, list):
+        features_to_drop = list(raw_feats)
+    else:
+        features_to_drop = []
+
+    X_tr = ctx.split.X_train
+    y_tr = ctx.split.y_train
+    X_ho = ctx.split.X_holdout
+
+    unknown = [f for f in features_to_drop if f not in X_tr.columns]
+    if unknown:
+        raise ValueError(f"Unknown features to drop: {unknown}")
+
+    reduced_cols = [c for c in X_tr.columns if c not in features_to_drop]
+    reduced_col_types = {c: ctx.col_types[c] for c in reduced_cols if c in ctx.col_types}
+
+    adapter = get_model(ctx.config.model_spec, reduced_col_types, seed=ctx.config.seed)
+    adapter.fit(X_tr[reduced_cols], y_tr)
+
+    holdout_pred = np.asarray(adapter.predict(X_ho[reduced_cols]), dtype=int)
+    holdout_proba = np.asarray(adapter.predict_proba(X_ho[reduced_cols])[:, 1], dtype=float)
+
+    current_pred = None
+    current_proba = None
+    if getattr(ctx.split, "X_current", None) is not None:
+        X_curr = ctx.split.X_current
+        current_pred = np.asarray(adapter.predict(X_curr[reduced_cols]), dtype=int)
+        current_proba = np.asarray(adapter.predict_proba(X_curr[reduced_cols])[:, 1], dtype=float)
+
+    return InterventionOutcome(
+        holdout_pred=holdout_pred,
+        holdout_proba=holdout_proba,
+        fitted_adapter=adapter,
+        factory=None,
+        current_pred=current_pred,
+        current_proba=current_proba,
+        notes=[f"dropped_features={sorted(features_to_drop)}"],
+    )

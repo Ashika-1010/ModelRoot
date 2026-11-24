@@ -28,24 +28,32 @@ def impact_from_results(
     scenario_score: float,
     metric: str = "macro_f1",
     threshold: float = 0.02,
+    direction: str = "degradation",
 ) -> tuple[float, bool]:
     """Compute direction-aware performance impact and no_effect flag.
 
-    For higher-is-better metrics, degradation is clean_score - scenario_score.
-    For lower-is-better metrics (loss, error, mse, etc.), degradation is
-    scenario_score - clean_score.
+    For 'degradation':
+        For higher-is-better metrics, degradation is clean_score - scenario_score.
+        For lower-is-better metrics, degradation is scenario_score - clean_score.
+    For 'inflation':
+        For higher-is-better metrics, inflation is scenario_score - clean_score.
+        For lower-is-better metrics, inflation is clean_score - scenario_score.
 
     Args:
         clean_score: Performance on clean baseline.
         scenario_score: Performance on injected scenario.
         metric: Evaluation metric name.
         threshold: Threshold below which no_effect is True (default 0.02).
+        direction: Direction of effect ('degradation' or 'inflation').
 
     Returns:
         Tuple of (impact_float, no_effect_bool).
     """
     lower_is_better = any(kw in metric.lower() for kw in ("loss", "error", "mse", "mae", "brier"))
-    impact = scenario_score - clean_score if lower_is_better else clean_score - scenario_score
+    if direction == "inflation":
+        impact = clean_score - scenario_score if lower_is_better else scenario_score - clean_score
+    else:
+        impact = scenario_score - clean_score if lower_is_better else clean_score - scenario_score
 
     no_effect = impact < threshold
     return float(impact), bool(no_effect)
@@ -59,6 +67,7 @@ def oracle_impact(
     scenario_model_spec: dict[str, Any] | None = None,
     metric: str = "macro_f1",
     seed: int = 42,
+    direction: str = "degradation",
 ) -> tuple[float, bool]:
     """Compute performance impact and no_effect flag between clean and injected scenarios.
 
@@ -148,4 +157,4 @@ def oracle_impact(
     )
     score_scen = float(fn(y_scen_te, pred_scen, proba_scen))
 
-    return impact_from_results(score_clean, score_scen, metric=metric)
+    return impact_from_results(score_clean, score_scen, metric=metric, direction=direction)

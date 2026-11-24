@@ -1,10 +1,13 @@
-"""Evidence package: rules, decision protocol, strength, severity, ranking (M10)."""
+"""Evidence package: rules, decision protocol, strength, severity, ranking (M10/M14/M15/M16)."""
 
 from __future__ import annotations
 
 from modelroot.evidence.rules import (
     RULE_IM_D1,
     RULE_IM_D2,
+    RULE_LK_A_D1,
+    RULE_LK_B_D1,
+    RULE_LK_C_D1,
     RULE_SET_VERSION,
     Criterion,
     Rule,
@@ -24,6 +27,9 @@ from modelroot.evidence.rules import (
 __all__ = [
     "RULE_IM_D1",
     "RULE_IM_D2",
+    "RULE_LK_A_D1",
+    "RULE_LK_B_D1",
+    "RULE_LK_C_D1",
     "RULE_SET_VERSION",
     "Criterion",
     "Rule",

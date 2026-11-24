@@ -196,6 +196,75 @@ RULE_IM_D2 = Rule(
 )
 register_rule(RULE_IM_D2)
 
+# Built-in rules for H3 Leakage (M15/M16)
+RULE_LK_A_D1 = Rule(
+    id="LK-A-D1",
+    text=(
+        "Supported if duplicate holdout rows inflate performance by delta >= delta_min "
+        "with CI excluding zero; rejected if CI upper < delta_min."
+    ),
+    criteria=[
+        Criterion(
+            id="dup_frac_gte_thresh",
+            weight=1.0,
+            description="dup_fraction >= thresholds.dup_frac",
+        ),
+        Criterion(
+            id="inflation_supported",
+            weight=1.0,
+            description="Inflation Δ >= delta_min and CI lower > 0",
+        ),
+        Criterion(
+            id="adequately_powered",
+            weight=1.0,
+            description="Power gate passed on deduplicated subset",
+        ),
+    ],
+)
+register_rule(RULE_LK_A_D1)
+
+RULE_LK_B_D1 = Rule(
+    id="LK-B-D1",
+    text=(
+        "Supported if flagged feature has permutation importance share >= id_imp_supported; "
+        "weakly supported if >= id_imp_rejected; otherwise rejected."
+    ),
+    criteria=[
+        Criterion(
+            id="flagged_identifier",
+            weight=1.0,
+            description="Feature flagged by high unique ratio or row-order correlation",
+        ),
+        Criterion(
+            id="importance_supported",
+            weight=1.0,
+            description="Importance share >= id_imp_supported (0.25)",
+        ),
+    ],
+)
+register_rule(RULE_LK_B_D1)
+
+RULE_LK_C_D1 = Rule(
+    id="LK-C-D1",
+    text=(
+        "Supported if user-flagged suspect has importance share >= 0.10 or transfer diagnostic "
+        "supported; capped at weakly_supported otherwise."
+    ),
+    criteria=[
+        Criterion(
+            id="suspect_selected",
+            weight=1.0,
+            description="Suspect selected by AUC, importance, or user flag",
+        ),
+        Criterion(
+            id="confirmed_proxy",
+            weight=1.0,
+            description="Confirmed by user-flagged importance >= 0.10 or transfer diagnostic",
+        ),
+    ],
+)
+register_rule(RULE_LK_C_D1)
+
 
 # ---------------------------------------------------------------------------
 # Decision protocol

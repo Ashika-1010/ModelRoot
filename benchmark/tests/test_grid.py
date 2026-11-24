@@ -8,7 +8,7 @@ from modelroot_bench.grid import build_grid, load_grid_config
 def test_load_mini_grid_config() -> None:
     cfg = load_grid_config("mini")
     assert cfg["name"] == "mini"
-    assert len(cfg["scenarios"]) == 15
+    assert len(cfg["scenarios"]) == 24
 
 
 def test_build_grid_deterministic_ids() -> None:
@@ -16,7 +16,7 @@ def test_build_grid_deterministic_ids() -> None:
     specs1 = build_grid(cfg)
     specs2 = build_grid(cfg)
 
-    assert len(specs1) == 15
+    assert len(specs1) == 24
     ids1 = [s.id for s in specs1]
     ids2 = [s.id for s in specs2]
     assert ids1 == ids2

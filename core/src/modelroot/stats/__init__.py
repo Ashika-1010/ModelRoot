@@ -1,4 +1,4 @@
-"""Statistics package: bootstrap, effects, repeated subsampling, NB, power (M7/M8)."""
+"""Statistics package: bootstrap, effects, repeated subsampling, NB, power (M7/M8/M15)."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from modelroot.stats.effects import EffectClass, classify_effect
 from modelroot.stats.nadeau_bengio import NBTestResult, corrected_resampled_ttest, nb_to_contract
 from modelroot.stats.power import GateResult, is_negligible, minimum_detectable_effect, power_gate
 from modelroot.stats.repeated import RepeatedResult, consistency, repeated_subsample_deltas
+from modelroot.stats.subset_bootstrap import paired_subset_bootstrap
 
 __all__ = [
     "BootstrapError",
@@ -31,6 +32,7 @@ __all__ = [
     "minimum_detectable_effect",
     "nb_to_contract",
     "paired_bootstrap",
+    "paired_subset_bootstrap",
     "power_gate",
     "repeated_subsample_deltas",
     "two_sample_bootstrap_diff",

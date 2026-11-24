@@ -1,6 +1,6 @@
 {
   "name": "mini",
-  "description": "Mini benchmark grid for CI and fast validation (~12 scenarios).",
+  "description": "Mini benchmark grid for CI and fast validation (~24 scenarios including M15/M16).",
   "scenarios": [
     {
       "dataset": "synthetic_easy",
@@ -143,7 +143,96 @@
       ],
       "seed": 44,
       "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_duplicate", "severity": "S2"}
+      ],
+      "seed": 46,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_duplicate", "severity": "S3"}
+      ],
+      "seed": 46,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_identifier", "severity": "S2"}
+      ],
+      "seed": 47,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_identifier", "severity": "S3"}
+      ],
+      "seed": 47,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "hard_negative",
+      "injections": [
+        {"label": "hard_negative_highcard", "severity": ""}
+      ],
+      "seed": 48,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_proxy", "severity": "S2"}
+      ],
+      "seed": 49,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_proxy", "severity": "S3"}
+      ],
+      "seed": 49,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "leak_proxy", "severity": "S3f"}
+      ],
+      "seed": 49,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_medium",
+      "model": "decision_tree",
+      "scenario_class": "hard_negative",
+      "injections": [
+        {"label": "hard_negative_strong", "severity": ""}
+      ],
+      "seed": 50,
+      "role": "dev"
     }
   ]
 }
-

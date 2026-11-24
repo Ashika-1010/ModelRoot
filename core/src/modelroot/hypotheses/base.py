@@ -34,6 +34,13 @@ class HypothesisContext:
     thresholds: Thresholds | None = None
     budget_check: Callable[[], None] | None = None
 
+    def seed_for(self, *parts: str) -> int:
+        """Derive a deterministic integer seed for the given component/step."""
+        name = ":".join(parts) if parts else "default"
+        if hasattr(self.seeds, "spawn"):
+            return int(self.seeds.spawn(name))
+        return int(self.config.seed if self.config else 0)
+
 
 @dataclass(frozen=True)
 class Applicability:

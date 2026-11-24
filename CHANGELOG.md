@@ -229,3 +229,43 @@ Versions correspond to milestones; semantic versioning begins at v1.0 (M36).
 - `benchmark/modelroot_bench/runner.py`: Namespaced sub-claim translations (`{hypothesis}:{subtype}`) so results cleanly roll up into parent types.
 - `benchmark/configs/mini.json`: Extended mini grid to 15 scenarios, adding single-failure S1 and S2 imbalance scenarios and separable hard-negative control.
 - 16 new unit, integration, and benchmark tests covering H2 trigger, applicability, inner-CV leakage guards, distortion/harm evaluation, injectors, and end-to-end mini grid scoring.
+
+## [Unreleased — M15] — 2026-11-24
+
+### Added
+
+- `core/src/modelroot/stats/subset_bootstrap.py`: `paired_subset_bootstrap` evaluating metric inflation on full vs deduplicated holdout data with block bootstrap, ddof=1 SE, and percentile CI.
+- `core/src/modelroot/hypotheses/leakage.py`:
+  - `row_hashes(X)`: exact uint64 row hashing preserving NaN consistency and numeric normalization.
+  - `permutation_importance_share(ctx)`: holdout permutation importance shares for feature attribution.
+  - `LeakageDuplicateHypothesis`: H3a Duplicate/Overlap Leakage (`leakage_duplicate`, subtype `duplicate`, rules `LK-A-T1`, `LK-A-D1`).
+  - `LeakageIdentifierHypothesis`: H3b Identifier/Row-Order Leakage (`leakage_identifier`, subtype `identifier`, rules `LK-B-T1`, `LK-B-D1`).
+- `core/src/modelroot/experiments/interventions.py`: Registered `drop_features` intervention fitting reduced column sets with `get_model()` and evaluating holdout and optional current sets.
+- `core/src/modelroot/config/thresholds.py`: Thresholds for M15: `dup_frac=0.01`, `id_unique_ratio=0.95`, `id_rowcorr=0.95`, `id_imp_supported=0.25`, `id_imp_rejected=0.05`.
+- `core/src/modelroot/evidence/rules.py`: Registered `RULE_LK_A_D1` ("LK-A-D1") and `RULE_LK_B_D1` ("LK-B-D1").
+- `benchmark/modelroot_bench/datasets/synthetic.py`: Registered `synth_noisy` (n=3000, 12 features, flip_y=0.10) for leakage benchmarking.
+- `benchmark/modelroot_bench/inject/leak_duplicate.py`: `LeakDuplicateInjector` (S1/S2/S3).
+- `benchmark/modelroot_bench/inject/leak_identifier.py`: `LeakIdentifierInjector` (S1/S2/S3).
+- `benchmark/modelroot_bench/inject/hard_negative_highcard.py`: `HardNegativeHighcardInjector` (high-cardinality non-leaking token control).
+- 12 new unit and benchmark tests covering subset bootstrap, row hashing, duplicate leakage, identifier leakage, and M15 failure injectors.
+
+## [Unreleased — M16] — 2026-11-24
+
+### Added
+
+- `core/src/modelroot/hypotheses/leakage.py`:
+  - `LeakageTargetProxyHypothesis`: H3c Target-Proxy Leakage (`leakage_target_proxy`, subtype `target_proxy`, rules `LK-C-T1`, `LK-C-D1`).
+  - `single_feature_score`: depth-4 decision tree 3-fold CV ROC-AUC evaluation.
+  - `flip_effect`: inverting bootstrap effect direction for ablation dependence.
+  - `status_for_proxy`: priority-based decision precedence under both profiles (user-flagged, transfer, and capping generic support at weakly_supported).
+  - Mandatory verbatim caveat requiring domain review for proxy findings.
+- `core/src/modelroot/config/thresholds.py`: Thresholds for M16: `sf_auc=0.90`, `proxy_imp_share=0.50`, `transfer_auc_drop=0.15`, `flagged_imp_supported=0.10`, `flagged_imp_min=0.05`.
+- `core/src/modelroot/evidence/rules.py`: Registered `RULE_LK_C_D1` ("LK-C-D1").
+- `core/src/modelroot/hypotheses/registry.py`: Canonical hypothesis order updated to: Overfitting (H1), Imbalance (H2), Duplicate leakage (H3a), Identifier leakage (H3b), Target-proxy leakage (H3c).
+- `benchmark/modelroot_bench/inject/base.py`: Extended `InjectedScenario` with `current_df`, `direction="inflation"`, and `metadata`.
+- `benchmark/modelroot_bench/oracle.py`: Enhanced `oracle_impact` and `impact_from_results` with `direction="inflation"` support.
+- `benchmark/modelroot_bench/runner.py`: Scenario execution forwarding `current_df`, `direction`, and `metadata` to pipeline.
+- `benchmark/modelroot_bench/inject/leak_proxy.py`: `LeakProxyInjector` supporting severities S1/S2/S3, transfer variant (S3t), and flagged variant (S3f).
+- `benchmark/modelroot_bench/inject/hard_negative_strong.py`: `HardNegativeStrongInjector` negative control for strong predictive features.
+- `benchmark/configs/mini.json`: Extended mini grid to 24 scenarios covering M15 duplicate and identifier leakage, M16 target-proxy leakage, and negative controls.
+- 45 new unit and benchmark tests covering single feature scoring, flip effect, status capping property invariants, proxy injection, and mini grid execution.

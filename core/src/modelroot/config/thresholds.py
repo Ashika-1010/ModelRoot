@@ -1,9 +1,8 @@
-"""Assessment thresholds (M6 + M8).
+"""Assessment thresholds (M6 + M8 + M11 + M14 + M15 + M16).
 
 ``Thresholds`` is the single source of truth for all numerical decision
-boundaries used by the assessment verdict logic and the M8 power gate.
-Only assessor-level and M8 fields are included here; hypothesis thresholds
-are added in later milestones.
+boundaries used by the assessment verdict logic, M8 power gate, and
+hypothesis evaluations.
 """
 
 from __future__ import annotations
@@ -12,10 +11,9 @@ from pydantic import BaseModel, ConfigDict
 
 
 class Thresholds(BaseModel):
-    """Numerical thresholds for assessment verdict and statistics (M6/M8 scope).
+    """Numerical thresholds for assessment verdict and statistics (M6-M16 scope).
 
-    All fields are frozen after construction.  Future milestones will add
-    hypothesis-specific thresholds via additive extension.
+    All fields are frozen after construction.
 
     Attributes:
         headroom: Minimum gap (reference - baseline) on the primary metric
@@ -66,3 +64,17 @@ class Thresholds(BaseModel):
     acc_bacc_gap: float = 0.05
     majority_margin: float = 0.02
     minority_oof_min: int = 30
+
+    # M15 structural leakage thresholds
+    dup_frac: float = 0.01
+    id_unique_ratio: float = 0.95
+    id_rowcorr: float = 0.95
+    id_imp_supported: float = 0.25
+    id_imp_rejected: float = 0.05
+
+    # M16 target-proxy leakage thresholds
+    sf_auc: float = 0.90
+    proxy_imp_share: float = 0.50
+    transfer_auc_drop: float = 0.15
+    flagged_imp_supported: float = 0.10
+    flagged_imp_min: float = 0.05

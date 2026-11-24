@@ -1,11 +1,16 @@
-"""Hypothesis registry (M9/M11).
+"""Hypothesis registry (M9/M11/M14/M15/M16).
 
 Hypotheses are registered in order; ``diagnose`` iterates them in
 registration order. The registry is module-level (global by default) but
 an isolated registry can be created for testing.
 
-``default_hypotheses()`` returns the canonical ordered tuple that includes
-H1 first, followed by any explicitly registered hypotheses.
+``default_hypotheses()`` returns the canonical ordered tuple:
+1. Overfitting (H1)
+2. Imbalance (H2)
+3. Duplicate leakage (H3a)
+4. Identifier leakage (H3b)
+5. Target-proxy leakage (H3c)
+followed by any explicitly registered user hypotheses.
 """
 
 from __future__ import annotations
@@ -39,7 +44,7 @@ def register_hypothesis(cls: type[Hypothesis]) -> type[Hypothesis]:
 def get_registry() -> list[type[Hypothesis]]:
     """Return a shallow copy of the current global registry.
 
-    This is the *user-registered* registry; it does not include H1 by default.
+    This is the *user-registered* registry; it does not include built-ins by default.
     Use :func:`default_hypotheses` for the full canonical list.
 
     Returns:
@@ -56,16 +61,33 @@ def clear_registry() -> None:
 def default_hypotheses() -> tuple[type[Hypothesis], ...]:
     """Return the canonical ordered tuple of hypotheses for ``diagnose()``.
 
-    H1 (OverfittingHypothesis) is always first, followed by H2 (ImbalanceHypothesis),
+    Order:
+    1. Overfitting (H1)
+    2. Imbalance (H2)
+    3. Duplicate leakage (H3a)
+    4. Identifier leakage (H3b)
+    5. Target-proxy leakage (H3c, if available)
     followed by any hypotheses in the global registry in registration order.
 
     Returns:
         Tuple of hypothesis *classes* in run order.
     """
     from modelroot.hypotheses.imbalance import ImbalanceHypothesis
+    from modelroot.hypotheses.leakage import (
+        LeakageDuplicateHypothesis,
+        LeakageIdentifierHypothesis,
+        LeakageTargetProxyHypothesis,
+    )
     from modelroot.hypotheses.overfitting import OverfittingHypothesis
 
-    seen: list[type[Hypothesis]] = [OverfittingHypothesis, ImbalanceHypothesis]
+    seen: list[type[Hypothesis]] = [
+        OverfittingHypothesis,
+        ImbalanceHypothesis,
+        LeakageDuplicateHypothesis,
+        LeakageIdentifierHypothesis,
+        LeakageTargetProxyHypothesis,
+    ]
+
     for cls in _REGISTRY:
         if cls not in seen:
             seen.append(cls)

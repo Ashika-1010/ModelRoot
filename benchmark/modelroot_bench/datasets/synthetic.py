@@ -134,3 +134,21 @@ def register_builtin_datasets() -> None:
             description="Large synthetic binary classification problem (n=3000, 15 features).",
         )
     )
+
+    register_dataset(
+        DatasetSpec(
+            name="synth_noisy",
+            load=lambda: make_synthetic_dataset(
+                n_samples=3000,
+                n_features=12,
+                n_informative=6,
+                class_sep=1.0,
+                flip_y=0.10,
+                seed=105,
+            ),
+            target="target",
+            positive="1",
+            role="dev",
+            description="Synthetic noisy binary classification problem (n=3000, 12 features).",
+        )
+    )
