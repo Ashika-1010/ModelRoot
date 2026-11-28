@@ -73,6 +73,26 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Decision-rule profile (default: full).",
     )
 
+    # ------------------------------------------------------------------
+    # drift (M19)
+    # ------------------------------------------------------------------
+    drift_p = sub.add_parser(
+        "drift", help="Compute univariate and domain classifier dataset drift."
+    )
+    drift_p.add_argument("--reference", required=True, help="Path to reference CSV dataset.")
+    drift_p.add_argument("--current", required=True, help="Path to current CSV dataset.")
+    drift_p.add_argument(
+        "--target", default=None, help="Target column to exclude from drift analysis."
+    )
+    drift_p.add_argument(
+        "--n-permutations",
+        type=int,
+        default=50,
+        help="Number of label permutations for domain classifier p-value (default: 50).",
+    )
+    drift_p.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")
+    drift_p.add_argument("--out", default=None, help="Path to write JSON drift report.")
+
     return parser
 
 
@@ -93,6 +113,10 @@ def main(argv: list[str] | None = None) -> None:
         _run_assess(args)
     elif args.command == "diagnose":
         _run_diagnose(args)
+    elif args.command == "drift":
+        from modelroot.cli.drift import run_drift_cli
+
+        run_drift_cli(args)
 
 
 def _run_assess(args: argparse.Namespace) -> None:

@@ -10,6 +10,8 @@ from modelroot_bench.inject.leak_duplicate import LeakDuplicateInjector
 from modelroot_bench.inject.leak_identifier import LeakIdentifierInjector
 from modelroot_bench.inject.leak_proxy import LeakProxyInjector
 from modelroot_bench.inject.overfitting import OverfittingInjector
+from modelroot_bench.inject.shift import ShiftInjector
+from modelroot_bench.inject.subgroup import SubgroupInjector
 
 _INJECTORS: dict[str, type[Injector]] = {
     "clean": CleanControlInjector,
@@ -25,6 +27,8 @@ _INJECTORS: dict[str, type[Injector]] = {
     "leakage:identifier": LeakIdentifierInjector,
     "leakage:target_proxy": LeakProxyInjector,
     "overfitting": OverfittingInjector,
+    "shift": ShiftInjector,
+    "subgroup": SubgroupInjector,
 }
 
 
@@ -58,6 +62,7 @@ __all__ = [
     "LeakIdentifierInjector",
     "LeakProxyInjector",
     "OverfittingInjector",
+    "SubgroupInjector",
     "get_injector",
     "list_injectors",
     "register_injector_cls",

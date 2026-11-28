@@ -1,0 +1,44 @@
+{
+  "name": "mini_shift",
+  "description": "Mini benchmark grid for H5 Distribution Shift validation.",
+  "scenarios": [
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "clean_control",
+      "injections": [],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "shift", "severity": "S1"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "shift", "severity": "S2"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "shift", "severity": "S3"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    }
+  ]
+}

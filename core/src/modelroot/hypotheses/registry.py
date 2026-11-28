@@ -67,6 +67,8 @@ def default_hypotheses() -> tuple[type[Hypothesis], ...]:
     3. Duplicate leakage (H3a)
     4. Identifier leakage (H3b)
     5. Target-proxy leakage (H3c, if available)
+    6. Subgroup underperformance (H4)
+    7. Distribution shift (H5)
     followed by any hypotheses in the global registry in registration order.
 
     Returns:
@@ -79,6 +81,8 @@ def default_hypotheses() -> tuple[type[Hypothesis], ...]:
         LeakageTargetProxyHypothesis,
     )
     from modelroot.hypotheses.overfitting import OverfittingHypothesis
+    from modelroot.hypotheses.shift import ShiftHypothesis
+    from modelroot.hypotheses.subgroup import SubgroupHypothesis
 
     seen: list[type[Hypothesis]] = [
         OverfittingHypothesis,
@@ -86,6 +90,8 @@ def default_hypotheses() -> tuple[type[Hypothesis], ...]:
         LeakageDuplicateHypothesis,
         LeakageIdentifierHypothesis,
         LeakageTargetProxyHypothesis,
+        SubgroupHypothesis,
+        ShiftHypothesis,
     ]
 
     for cls in _REGISTRY:

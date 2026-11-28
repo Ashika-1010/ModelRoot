@@ -387,6 +387,56 @@ def imbalance_best_intervention(ctx: Any, params: dict[str, Any]) -> Interventio
     return outcome
 
 
+@intervention("reweight_group")
+def reweight_group_intervention(ctx: Any, params: dict[str, Any]) -> InterventionOutcome:
+    """E-SG-2: Reweight underperforming subgroup in training (inverse-frequency capped)."""
+    from modelroot.hypotheses.slices import Slice, get_slice_mask
+    from modelroot.models.registry import get_model
+
+    X_tr, y_tr, X_ho, _y_ho, _feature_cols = _get_train_holdout_data(ctx)
+    feature = str(params.get("feature", ""))
+    value = params.get("value")
+    is_numeric_bin = bool(params.get("is_numeric_bin", False))
+    bin_edges = params.get("bin_edges")
+    weight_cap = float(params.get("weight_cap", 5.0))
+
+    sl = Slice(
+        feature=feature,
+        value=value,
+        is_numeric_bin=is_numeric_bin,
+        bin_edges=tuple(bin_edges) if bin_edges is not None else None,
+    )
+
+    slice_mask_tr = get_slice_mask(X_tr, sl)
+    n_total = len(X_tr)
+    n_slice = int(np.sum(slice_mask_tr))
+
+    if n_slice == 0 or n_slice == n_total:
+        sw = np.ones(n_total, dtype=float)
+    else:
+        # Inverse-frequency weight for subgroup: (n_total / n_slice), capped at weight_cap
+        raw_weight = float(n_total) / float(2 * n_slice)
+        slice_weight = min(weight_cap, max(1.0, raw_weight))
+        sw = np.where(slice_mask_tr, slice_weight, 1.0)
+
+    adapter = get_model(ctx.config.model_spec, ctx.col_types, seed=ctx.config.seed)
+    adapter.fit(X_tr, y_tr, sample_weight=sw)
+
+    def factory() -> Any:
+        return get_model(ctx.config.model_spec, ctx.col_types, seed=ctx.config.seed)
+
+    holdout_pred = np.asarray(adapter.predict(X_ho), dtype=int)
+    holdout_proba = np.asarray(adapter.predict_proba(X_ho)[:, 1], dtype=float)
+
+    return InterventionOutcome(
+        holdout_pred=holdout_pred,
+        holdout_proba=holdout_proba,
+        fitted_adapter=adapter,
+        factory=factory,
+        notes=[f"intervention=reweight_group, feature={feature}, weight_cap={weight_cap}"],
+    )
+
+
 @intervention("drop_features")
 def drop_features_intervention(ctx: Any, params: dict[str, Any]) -> InterventionOutcome:
     """E-LK-3 / E-LK-4: Drop specified feature subset and fit reduced model (M16)."""
@@ -435,4 +485,116 @@ def drop_features_intervention(ctx: Any, params: dict[str, Any]) -> Intervention
         current_pred=current_pred,
         current_proba=current_proba,
         notes=[f"dropped_features={sorted(features_to_drop)}"],
+    )
+
+
+@intervention("ablate_drifted")
+def ablate_drifted_intervention(ctx: Any, params: dict[str, Any]) -> InterventionOutcome:
+    """E-SH-1: Retrain model without top drifted feature (M20)."""
+    from modelroot.models.registry import get_model
+
+    if ctx.budget_check:
+        ctx.budget_check()
+
+    raw_feats = params.get("features", params.get("feature", ""))
+    if isinstance(raw_feats, str):
+        features_to_drop = [f.strip() for f in raw_feats.split(",") if f.strip()]
+    elif isinstance(raw_feats, list):
+        features_to_drop = list(raw_feats)
+    else:
+        features_to_drop = []
+
+    if hasattr(ctx.split, "train"):
+        X_tr = ctx.split.train.X
+        y_tr = ctx.split.train.y
+        X_ho = ctx.split.holdout.X
+        X_curr = ctx.split.current.X if getattr(ctx.split, "current", None) is not None else None
+    else:
+        X_tr = ctx.split.X_train
+        y_tr = ctx.split.y_train
+        X_ho = ctx.split.X_holdout
+        X_curr = getattr(ctx.split, "X_current", None)
+
+    reduced_cols = [c for c in X_tr.columns if c not in features_to_drop]
+    reduced_col_types = {c: ctx.col_types[c] for c in reduced_cols if c in ctx.col_types}
+
+    adapter = get_model(ctx.config.model_spec, reduced_col_types, seed=ctx.config.seed)
+    adapter.fit(X_tr[reduced_cols], y_tr)
+
+    holdout_pred = np.asarray(adapter.predict(X_ho[reduced_cols]), dtype=int)
+    holdout_proba = np.asarray(adapter.predict_proba(X_ho[reduced_cols])[:, 1], dtype=float)
+
+    current_pred = None
+    current_proba = None
+    if X_curr is not None:
+        current_pred = np.asarray(adapter.predict(X_curr[reduced_cols]), dtype=int)
+        current_proba = np.asarray(adapter.predict_proba(X_curr[reduced_cols])[:, 1], dtype=float)
+
+    return InterventionOutcome(
+        holdout_pred=holdout_pred,
+        holdout_proba=holdout_proba,
+        fitted_adapter=adapter,
+        factory=None,
+        current_pred=current_pred,
+        current_proba=current_proba,
+        notes=[f"ablated_drifted_features={sorted(features_to_drop)}"],
+    )
+
+
+@intervention("quantile_align")
+def quantile_align_intervention(ctx: Any, params: dict[str, Any]) -> InterventionOutcome:
+    """E-SH-2: Align current distribution quantiles to reference distribution (M20)."""
+    import scipy.stats as stats
+
+    if ctx.budget_check:
+        ctx.budget_check()
+
+    raw_feats = params.get("features", params.get("feature", ""))
+    if isinstance(raw_feats, str):
+        align_features = [f.strip() for f in raw_feats.split(",") if f.strip()]
+    elif isinstance(raw_feats, list):
+        align_features = list(raw_feats)
+    else:
+        align_features = []
+
+    if hasattr(ctx.split, "train"):
+        X_tr = ctx.split.train.X
+        X_ho = ctx.split.holdout.X
+        X_curr = ctx.split.current.X if getattr(ctx.split, "current", None) is not None else None
+    else:
+        X_tr = ctx.split.X_train
+        X_ho = ctx.split.X_holdout
+        X_curr = getattr(ctx.split, "X_current", None)
+
+    adapter = ctx.baseline_run.adapter
+    holdout_pred = np.asarray(adapter.predict(X_ho), dtype=int)
+    holdout_proba = np.asarray(adapter.predict_proba(X_ho)[:, 1], dtype=float)
+
+    current_pred = None
+    current_proba = None
+
+    if X_curr is not None:
+        X_curr_aligned = X_curr.copy()
+        for feat in align_features:
+            if feat in X_curr.columns and feat in X_tr.columns:
+                ref_vals = X_tr[feat].dropna().to_numpy(dtype=float)
+                cur_vals = X_curr[feat].to_numpy(dtype=float)
+
+                if len(ref_vals) > 0 and len(cur_vals) > 0:
+                    ranks = stats.rankdata(cur_vals, method="average")
+                    pcts = np.clip((ranks - 0.5) / float(len(cur_vals)) * 100.0, 0.0, 100.0)
+                    aligned_vals = np.percentile(ref_vals, pcts)
+                    X_curr_aligned[feat] = aligned_vals
+
+        current_pred = np.asarray(adapter.predict(X_curr_aligned), dtype=int)
+        current_proba = np.asarray(adapter.predict_proba(X_curr_aligned)[:, 1], dtype=float)
+
+    return InterventionOutcome(
+        holdout_pred=holdout_pred,
+        holdout_proba=holdout_proba,
+        fitted_adapter=adapter,
+        factory=None,
+        current_pred=current_pred,
+        current_proba=current_proba,
+        notes=[f"aligned_features={sorted(align_features)}"],
     )

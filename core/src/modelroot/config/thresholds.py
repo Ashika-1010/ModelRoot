@@ -78,3 +78,19 @@ class Thresholds(BaseModel):
     transfer_auc_drop: float = 0.15
     flagged_imp_supported: float = 0.10
     flagged_imp_min: float = 0.05
+
+    # M18 subgroup underperformance thresholds
+    slice_gap: float = 0.05
+    slice_min_n: int = 30
+    slice_fdr_q: float = 0.10
+    slice_max_candidates: int = 5
+
+    # M19/M20 distribution shift thresholds
+    drift_auc_min: float = 0.60
+    drift_p_max: float = 0.01
+    drift_ks_min: float = 0.10
+    drift_psi_min: float = 0.20
+    dose_rho_min: float = 0.0
+    dose_p_max: float = 0.05
+    dose_min_rows: int = 50
+    dose_min_bins: int = 5

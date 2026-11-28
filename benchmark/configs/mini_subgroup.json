@@ -1,0 +1,44 @@
+{
+  "name": "mini_subgroup",
+  "description": "Mini benchmark grid for H4 Subgroup Underperformance validation.",
+  "scenarios": [
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "clean_control",
+      "injections": [],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "subgroup", "severity": "S1"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "subgroup", "severity": "S2"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    },
+    {
+      "dataset": "synthetic_easy",
+      "model": "random_forest",
+      "scenario_class": "single_failure",
+      "injections": [
+        {"label": "subgroup", "severity": "S3"}
+      ],
+      "seed": 42,
+      "role": "dev"
+    }
+  ]
+}
